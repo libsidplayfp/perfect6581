@@ -8,6 +8,9 @@
 
 #include "types.h"
 
+// Uncomment to emulate the MOS 8580 r5 model
+//#define MOS8580
+
 // Node Names
 enum {
     // power
@@ -797,6 +800,7 @@ enum {
     tri3_4,
     tri3_xor,
     // Triangle
+#ifndef MOS8580
     tri3_bit0_1,
     tri3_bit0_2,
     tri3_bit0_out,
@@ -830,6 +834,89 @@ enum {
     tri3_bit10_1,
     tri3_bit10_2,
     tri3_bit10_out,
+#else
+    tri3_bit0_1,
+    tri3_bit0_2,
+    tri3_bit0_3,
+    tri3_bit0_4,
+    tri3_bit0_5,
+    tri3_bit0_ltc,
+    tri3_bit0_out,
+    tri3_bit1_1,
+    tri3_bit1_2,
+    tri3_bit1_3,
+    tri3_bit1_4,
+    tri3_bit1_5,
+    tri3_bit1_ltc,
+    tri3_bit1_out,
+    tri3_bit2_1,
+    tri3_bit2_2,
+    tri3_bit2_3,
+    tri3_bit2_4,
+    tri3_bit2_5,
+    tri3_bit2_ltc,
+    tri3_bit2_out,
+    tri3_bit3_1,
+    tri3_bit3_2,
+    tri3_bit3_3,
+    tri3_bit3_4,
+    tri3_bit3_5,
+    tri3_bit3_ltc,
+    tri3_bit3_out,
+    tri3_bit4_1,
+    tri3_bit4_2,
+    tri3_bit4_3,
+    tri3_bit4_4,
+    tri3_bit4_5,
+    tri3_bit4_ltc,
+    tri3_bit4_out,
+    tri3_bit5_1,
+    tri3_bit5_2,
+    tri3_bit5_3,
+    tri3_bit5_4,
+    tri3_bit5_5,
+    tri3_bit5_ltc,
+    tri3_bit5_out,
+    tri3_bit6_1,
+    tri3_bit6_2,
+    tri3_bit6_3,
+    tri3_bit6_4,
+    tri3_bit6_5,
+    tri3_bit6_ltc,
+    tri3_bit6_out,
+    tri3_bit7_1,
+    tri3_bit7_2,
+    tri3_bit7_3,
+    tri3_bit7_4,
+    tri3_bit7_5,
+    tri3_bit7_ltc,
+    tri3_bit7_out,
+    tri3_bit8_1,
+    tri3_bit8_2,
+    tri3_bit8_3,
+    tri3_bit8_4,
+    tri3_bit8_5,
+    tri3_bit8_ltc,
+    tri3_bit8_out,
+    tri3_bit9_1,
+    tri3_bit9_2,
+    tri3_bit9_3,
+    tri3_bit9_4,
+    tri3_bit9_5,
+    tri3_bit9_ltc,
+    tri3_bit9_out,
+    tri3_bit10_1,
+    tri3_bit10_2,
+    tri3_bit10_3,
+    tri3_bit10_4,
+    tri3_bit10_5,
+    tri3_bit10_ltc,
+    tri3_bit10_out,
+    // Sawtooth bit23
+    saw3_bit23_1,
+    saw3_bit23,
+    saw3_bit23_ltc,
+#endif
     // Noise clock
     noi3_clk_ltc1,
     noi3_clk_ltc2,
@@ -1218,6 +1305,7 @@ netlist_6581_node_is_pullup[] = {
     // Triangle XOR circuit selector
     1, 1, 1, 0, 1,
     // Triangle
+#ifndef MOS8580
     1, 0, 1, // bit0
     1, 0, 1, // bit1
     1, 0, 1, // bit2
@@ -1229,6 +1317,21 @@ netlist_6581_node_is_pullup[] = {
     1, 0, 1, // bit8
     1, 0, 1, // bit9
     1, 0, 1, // bit10
+#else
+    1, 1, 0, 0, 1, 0, 1, // bit0
+    1, 1, 0, 0, 1, 0, 1, // bit1
+    1, 1, 0, 0, 1, 0, 1, // bit2
+    1, 1, 0, 0, 1, 0, 1, // bit3
+    1, 1, 0, 0, 1, 0, 1, // bit4
+    1, 1, 0, 0, 1, 0, 1, // bit5
+    1, 1, 0, 0, 1, 0, 1, // bit6
+    1, 1, 0, 0, 1, 0, 1, // bit7
+    1, 1, 0, 0, 1, 0, 1, // bit8
+    1, 1, 0, 0, 1, 0, 1, // bit9
+    1, 1, 0, 0, 1, 0, 1, // bit10
+    // Sawtooth bit23
+    1, 1, 0,
+#endif
     // Noise clock
     0, 0, 0, 0, 1, 1, 1, 0, 1,
     1, 1, 1, 1, 0,
@@ -2756,6 +2859,7 @@ netlist_6581_transdefs[] = {
     {tri3_2, tri3_4, GND},
 
     // Triangle
+#ifndef MOS8580
     {tri3_xor, tri3_bit0_out, tri3_bit0_2},
     {osc3_bit12, tri3_bit0_2, GND},
     {tri3_bit0_1, tri3_bit0_out, GND},
@@ -2821,7 +2925,111 @@ netlist_6581_transdefs[] = {
     {tri3_bit10_1, tri3_bit10_out, GND},
     {tri3_xor, tri3_bit10_1, GND},
     {osc3_bit22, tri3_bit10_1, GND},
+#else
+    {osc3_bit12, tri3_bit0_1, GND},
+    {tri3_xor, tri3_bit0_5, GND},
+    {tri3_bit0_1, tri3_bit0_2, tri3_bit0_3},
+    {tri3_xor, tri3_bit0_3, GND},
+    {osc3_bit12, tri3_bit0_2, tri3_bit0_4},
+    {tri3_bit0_5, tri3_bit0_4, GND},
+    {sid_clk2, tri3_bit0_2, tri3_bit0_ltc},
+    {tri3_bit0_ltc, tri3_bit0_out, GND},
 
+    {osc3_bit13_1, tri3_bit1_1, GND},
+    {tri3_xor, tri3_bit1_5, GND},
+    {tri3_bit1_1, tri3_bit1_2, tri3_bit1_3},
+    {tri3_xor, tri3_bit1_3, GND},
+    {osc3_bit13_1, tri3_bit1_2, tri3_bit1_4},
+    {tri3_bit1_5, tri3_bit1_4, GND},
+    {sid_clk2, tri3_bit1_2, tri3_bit1_ltc},
+    {tri3_bit1_ltc, tri3_bit1_out, GND},
+
+    {osc3_bit14, tri3_bit2_1, GND},
+    {tri3_xor, tri3_bit2_5, GND},
+    {tri3_bit2_1, tri3_bit2_2, tri3_bit2_3},
+    {tri3_xor, tri3_bit2_3, GND},
+    {osc3_bit14, tri3_bit2_2, tri3_bit2_4},
+    {tri3_bit2_5, tri3_bit2_4, GND},
+    {sid_clk2, tri3_bit2_2, tri3_bit2_ltc},
+    {tri3_bit2_ltc, tri3_bit2_out, GND},
+
+    {osc3_bit15_1, tri3_bit3_1, GND},
+    {tri3_xor, tri3_bit3_5, GND},
+    {tri3_bit3_1, tri3_bit3_2, tri3_bit3_3},
+    {tri3_xor, tri3_bit3_3, GND},
+    {osc3_bit15_1, tri3_bit3_2, tri3_bit3_4},
+    {tri3_bit3_5, tri3_bit3_4, GND},
+    {sid_clk2, tri3_bit3_2, tri3_bit3_ltc},
+    {tri3_bit3_ltc, tri3_bit3_out, GND},
+
+    {osc3_bit16, tri3_bit4_1, GND},
+    {tri3_xor, tri3_bit4_5, GND},
+    {tri3_bit4_1, tri3_bit4_2, tri3_bit4_3},
+    {tri3_xor, tri3_bit4_3, GND},
+    {osc3_bit16, tri3_bit4_2, tri3_bit4_4},
+    {tri3_bit4_5, tri3_bit4_4, GND},
+    {sid_clk2, tri3_bit4_2, tri3_bit4_ltc},
+    {tri3_bit4_ltc, tri3_bit4_out, GND},
+
+    {osc3_bit17_1, tri3_bit5_1, GND},
+    {tri3_xor, tri3_bit5_5, GND},
+    {tri3_bit5_1, tri3_bit5_2, tri3_bit5_3},
+    {tri3_xor, tri3_bit5_3, GND},
+    {osc3_bit17_1, tri3_bit5_2, tri3_bit5_4},
+    {tri3_bit5_5, tri3_bit5_4, GND},
+    {sid_clk2, tri3_bit5_2, tri3_bit5_ltc},
+    {tri3_bit5_ltc, tri3_bit5_out, GND},
+
+    {osc3_bit18, tri3_bit6_1, GND},
+    {tri3_xor, tri3_bit6_5, GND},
+    {tri3_bit6_1, tri3_bit6_2, tri3_bit6_3},
+    {tri3_xor, tri3_bit6_3, GND},
+    {osc3_bit18, tri3_bit6_2, tri3_bit6_4},
+    {tri3_bit6_5, tri3_bit6_4, GND},
+    {sid_clk2, tri3_bit6_2, tri3_bit6_ltc},
+    {tri3_bit6_ltc, tri3_bit6_out, GND},
+
+    {osc3_bit19_1, tri3_bit7_1, GND},
+    {tri3_xor, tri3_bit7_5, GND},
+    {tri3_bit7_1, tri3_bit7_2, tri3_bit7_3},
+    {tri3_xor, tri3_bit7_3, GND},
+    {osc3_bit19_1, tri3_bit7_2, tri3_bit7_4},
+    {tri3_bit7_5, tri3_bit7_4, GND},
+    {sid_clk2, tri3_bit7_2, tri3_bit7_ltc},
+    {tri3_bit7_ltc, tri3_bit7_out, GND},
+
+    {osc3_bit20, tri3_bit8_1, GND},
+    {tri3_xor, tri3_bit8_5, GND},
+    {tri3_bit8_1, tri3_bit8_2, tri3_bit8_3},
+    {tri3_xor, tri3_bit8_3, GND},
+    {osc3_bit20, tri3_bit8_2, tri3_bit8_4},
+    {tri3_bit8_5, tri3_bit8_4, GND},
+    {sid_clk2, tri3_bit8_2, tri3_bit8_ltc},
+    {tri3_bit8_ltc, tri3_bit8_out, GND},
+
+    {osc3_bit21_1, tri3_bit9_1, GND},
+    {tri3_xor, tri3_bit9_5, GND},
+    {tri3_bit9_1, tri3_bit9_2, tri3_bit9_3},
+    {tri3_xor, tri3_bit9_3, GND},
+    {osc3_bit21_1, tri3_bit9_2, tri3_bit9_4},
+    {tri3_bit9_5, tri3_bit9_4, GND},
+    {sid_clk2, tri3_bit9_2, tri3_bit9_ltc},
+    {tri3_bit9_ltc, tri3_bit9_out, GND},
+
+    {osc3_bit22, tri3_bit10_1, GND},
+    {tri3_xor, tri3_bit10_5, GND},
+    {tri3_bit10_1, tri3_bit10_2, tri3_bit10_3},
+    {tri3_xor, tri3_bit10_3, GND},
+    {osc3_bit22, tri3_bit10_2, tri3_bit10_4},
+    {tri3_bit10_5, tri3_bit10_4, GND},
+    {sid_clk2, tri3_bit10_2, tri3_bit10_ltc},
+    {tri3_bit10_ltc, tri3_bit10_out, GND},
+
+    // Sawtooth bit23
+    {osc3_bit23_1, saw3_bit23_1, GND},
+    {sid_clk2, saw3_bit23_1, saw3_bit23_ltc},
+    {saw3_bit23_ltc, saw3_bit23, GND},
+#endif
     // Noise clock
     {sid_clk2, osc3_bit19_1, noi3_clk_ltc1},
     {noi3_clk_ltc1, noi3_clk1, GND},
