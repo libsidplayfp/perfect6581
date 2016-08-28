@@ -106,27 +106,27 @@ readFreq3(void *state)
 }
 
 uint8_t
-readOsc3Low(void *state)
+readAcc3Low(void *state)
 {
     return readNodes(state, 8, (nodenum_t[]){ osc3_bit0, osc3_bit1_1, osc3_bit2, osc3_bit3_1, osc3_bit4, osc3_bit5_1, osc3_bit6, osc3_bit7_1 });
 }
 
 uint8_t
-readOsc3Mid(void *state)
+readAcc3Mid(void *state)
 {
     return readNodes(state, 8, (nodenum_t[]){ osc3_bit8, osc3_bit9_1, osc3_bit10, osc3_bit11_1, osc3_bit12, osc3_bit13_1, osc3_bit14, osc3_bit15_1 });
 }
 
 uint8_t
-readOsc3High(void *state)
+readAcc3High(void *state)
 {
     return readNodes(state, 8, (nodenum_t[]){ osc3_bit16, osc3_bit17_1, osc3_bit18, osc3_bit19_1, osc3_bit20, osc3_bit21_1, osc3_bit22, osc3_bit23_1 });
 }
 
 uint32_t
-readOsc3(void *state)
+readAcc3(void *state)
 {
-    return (readOsc3High(state) << 16) | (readOsc3Mid(state) << 8) | readOsc3Low(state);
+    return (readAcc3High(state) << 16) | (readAcc3Mid(state) << 8) | readAcc3Low(state);
 }
 
 uint8_t
@@ -249,8 +249,7 @@ step(void *state)
 
     //printf("/read: %s\n", isNodeHigh(state, read) ? "high" : "low"); //DEBUG
     //printf("/write: %s\n", isNodeHigh(state, write) ? "high" : "low"); //DEBUG
-    //printf("osc3_bit0_add_s: %s\n\n", isNodeHigh(state, osc3_bit0_add_s) ? "high" : "low"); //DEBUG
-    //printf("osc3: %06X\n", readOsc3(state)); //DEBUG
+    //printf("acc3: %06X\n", readAcc3(state)); //DEBUG
     //printf("pw3: %04X\n", readPw3(state)); //DEBUG
 	//printf("pul_out: %s\n\n", isNodeHigh(state, pul_out) ? "high" : "low"); //DEBUG
     //printf("tri3: %04X\n", readTri3(state)); //DEBUG
@@ -314,7 +313,7 @@ chipStatus(void *state)
     uint8_t d = readDataBus(state);
     BOOL r_w = isNodeHigh(state, rw);
 
-    printf("halfcyc:%d phi0:%d AB:%02X D:%02X RnW:%d CTL3:%02X FREQ3:%04X PW3:%04X Osc3:%06X Noi3:%06X",
+    printf("halfcyc:%d phi0:%d AB:%02X D:%02X RnW:%d CTL3:%02X FREQ3:%04X PW3:%04X Acc3:%06X Noi3:%06X",
                 cycle,
                 clk,
                 a,
@@ -323,7 +322,7 @@ chipStatus(void *state)
                 readCtl3(state),
                 readFreq3(state),
                 readPw3(state),
-                readOsc3(state),
+                readAcc3(state),
                 readNoi3(state));
 /*
     if (clk) {

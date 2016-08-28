@@ -17,7 +17,7 @@ enum {
     Vcc = 0,
     _Vdd_,
     GND,
-    // clock
+    // clock TODO: 8580
     Phi2,
     cl01,
     cl02,
