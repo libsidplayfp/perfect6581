@@ -27,7 +27,7 @@
 /* nodes & transistors */
 #include "netlist_6581.h"
 
-//#define DEBUG
+#define DEBUG
 
 /************************************************************
  *
@@ -230,36 +230,48 @@ static unsigned int cycle;
 void
 step(void *state)
 {
-    BOOL clk = isNodeHigh(state, Phi2);
+    BOOL clk = !isNodeHigh(state, Phi2);
 
     /* invert clock */
-    setNode(state, Phi2, !clk);
+    setNode(state, Phi2, clk);
     recalcNodeList(state);
 
     /* handle memory reads and writes */
-    //if (!clk)
+    //if (clk)
     //    handleMemory(state);
 #ifdef DEBUG
-    //printf("Phi2: %s\n", isNodeHigh(state, Phi2) ? "high" : "low"); //DEBUG
-    //printf("clk1: %s\n", isNodeHigh(state, sid_clk1) ? "high" : "low"); //DEBUG
-    //printf("clk2: %s\n\n", isNodeHigh(state, sid_clk2) ? "high" : "low"); //DEBUG
+    if (clk)
+    {
+        //printf("Phi2: %s\n", isNodeHigh(state, Phi2) ? "high" : "low"); //DEBUG
+        //printf("clk1: %s\n", isNodeHigh(state, sid_clk1) ? "high" : "low"); //DEBUG
+        //printf("clk2: %s\n\n", isNodeHigh(state, sid_clk2) ? "high" : "low"); //DEBUG
 
-    //printf("/res: %s\n", isNodeHigh(state, res) ? "high" : "low"); //DEBUG
-    //printf("sid_rst: %s\n\n", isNodeHigh(state, sid_rst) ? "high" : "low"); //DEBUG
+        //printf("/res: %s\n", isNodeHigh(state, res) ? "high" : "low"); //DEBUG
+        //printf("sid_rst: %s\n\n", isNodeHigh(state, sid_rst) ? "high" : "low"); //DEBUG
 
-    //printf("/read: %s\n", isNodeHigh(state, read) ? "high" : "low"); //DEBUG
-    //printf("/write: %s\n", isNodeHigh(state, write) ? "high" : "low"); //DEBUG
-    //printf("acc3: %06X\n", readAcc3(state)); //DEBUG
-    //printf("pw3: %04X\n", readPw3(state)); //DEBUG
-	//printf("pul_out: %s\n\n", isNodeHigh(state, pul_out) ? "high" : "low"); //DEBUG
-    //printf("tri3: %04X\n", readTri3(state)); //DEBUG
-    //printf("tri3 xor: %s\n\n", isNodeHigh(state, tri3_xor) ? "high" : "low"); //DEBUG
-    //if (isNodeHigh(state, noi3_clk_lc))
-    //{
-    //    printf("noi3: %04X\n", readVoi3(state)); //DEBUG
-    //}
-	printf("Voice 3: %04X\n", readVoi3(state)); //DEBUG
-    printf("\n");
+        //printf("/read: %s\n", isNodeHigh(state, read) ? "high" : "low"); //DEBUG
+        //printf("/write: %s\n", isNodeHigh(state, write) ? "high" : "low"); //DEBUG
+        //printf("acc3: %06X\n", readAcc3(state)); //DEBUG
+        //printf("pw3: %04X\n", readPw3(state)); //DEBUG
+            //printf("pul_out: %s\n\n", isNodeHigh(state, pul_out) ? "high" : "low"); //DEBUG
+        //printf("tri3: %04X\n", readTri3(state)); //DEBUG
+        //printf("tri3 xor: %s\n\n", isNodeHigh(state, tri3_xor) ? "high" : "low"); //DEBUG
+        //if (isNodeHigh(state, noi3_clk_lc))
+        //{
+        //    printf("noi3: %04X\n", readVoi3(state)); //DEBUG
+        //}
+            //printf("Voice 3: %04X\n", readVoi3(state)); //DEBUG
+        printf("env3_gate_cur: %s\n", isNodeHigh(state, env3_gate_cur) ? "high" : "low"); //DEBUG
+        printf("env3_not_gate_prev: %s\n", isNodeHigh(state, env3_not_gate_prev) ? "high" : "low"); //DEBUG
+        printf("env3_cnt_dir: %s\n", isNodeHigh(state, env3_cnt_dir) ? "high" : "low"); //DEBUG
+        
+        printf("env3_cnt_clk: %s\n", isNodeHigh(state, env3_cnt_clk) ? "high" : "low"); //DEBUG
+        printf("env3_cnt_clk_inv: %s\n", isNodeHigh(state, env3_cnt_clk_inv) ? "high" : "low"); //DEBUG
+        printf("env3_cnt_up: %s\n", isNodeHigh(state, env3_cnt_up) ? "high" : "low"); //DEBUG
+        printf("env3_cnt_down: %s\n", isNodeHigh(state, env3_cnt_down) ? "high" : "low"); //DEBUG
+        printf("env3_cnt_cry0: %s\n", isNodeHigh(state, env3_cnt_cry0) ? "high" : "low"); //DEBUG
+        printf("\n");
+    }
 #endif
     cycle++;
 }

@@ -1146,6 +1146,67 @@ enum {
     reg_osc3_bit7_2,
     reg_osc3_bit7_3,
 
+    // Envelope
+
+    // counting direction
+    env3_cd01,
+    env3_cd02,
+    env3_cd03,
+    env3_cd04,
+    env3_cd05,
+    env3_cd06,
+    env3_cd07,
+    env3_cd10,
+    env3_cd11,
+    env3_cd12,
+    env3_cd13,
+    env3_cd14,
+    env3_cd15,
+    env3_gate_cur,
+    env3_not_gate_prev,
+    env3_cnt_dir,
+    
+    env3_cd20,
+    env3_cd21,
+    env3_cd22,
+    env3_cd23,
+    env3_cd24,
+    env3_cd25,
+    env3_cd26,
+    env3_cd27,
+    env3_cd28,
+    env3_cd30,
+    env3_cd31,
+    env3_cd40,
+    env3_cd41,
+    env3_cd42,
+    env3_cd50,
+    env3_r0,
+    env3_cnt_clk_inv,
+    env3_cnt_clk,
+    env3_cnt_up,
+    env3_cnt_down,
+
+    env3_ce01,
+    env3_ce02,
+    env3_ce03,
+    env3_ce04,
+    env3_ce05,
+    env3_ce06,
+    env3_ce07,
+    env3_ce08,
+    env3_ce10,
+    env3_ce11,
+    env3_ce12,
+    env3_ce13,
+    env3_cnt_ena,
+    env3_cnt_cry0,
+
+    env3_0xFF = GND, //FIXME
+    env3_0x00 = GND, //FIXME
+    env3_rel_rst = GND, //FIXME
+    env3_cnt_sust = GND, //FIXME
+
     // Aliases
     Vdd = Vcc,
     ctl3_gate  = ctl3_bit0_out,
@@ -1157,6 +1218,7 @@ enum {
     ctl3_pulse = ctl3_bit6_out,
     ctl3_noise = ctl3_bit7_out,
     v2_bit23 = GND // TODO remove
+
 };
 
 /*
@@ -1386,6 +1448,11 @@ netlist_6581_node_is_pullup[] = {
     0, 1, 1, 0, // bit5
     0, 1, 1, 0, // bit6
     0, 1, 1, 0, // bit7
+
+    // counting direction
+    1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1,
+    0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0,
+    0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1,
 };
 
 // enhancement-mode (pull-down and pass) transistors
@@ -3389,4 +3456,75 @@ netlist_6581_transdefs[] = {
     {reg_osc3_bit7_2, Vcc, reg_osc3_bit7_3},
     {reg_osc3_bit7_1, reg_osc3_bit7_3, GND},
     {reg1B, reg_osc3_bit7_3, db7},
+
+    
+    // counting direction
+    {ctl3_gate, env3_cd01, GND},
+    {sid_clk2, env3_cd01, env3_cd02},
+    {env3_cd02, env3_gate_cur, GND},
+    {sid_clk1, env3_gate_cur, env3_cd03},
+    {env3_cd03, env3_cd04, GND},
+    {sid_clk2, env3_cd04, env3_not_gate_prev},
+    {env3_gate_cur, env3_cd05, env3_cd06},
+    {env3_cd04, env3_cd06, GND},
+    {env3_cnt_dir, env3_cd05, GND},
+    {sid_clk1, env3_0xFF, env3_cd10},
+    {env3_cd10, env3_cd11, GND},
+    {sid_clk2, env3_cd11, env3_cd12},
+    {env3_cd12, env3_cd13, GND},
+    {sid_clk1, env3_cd13, env3_cd14},
+    {env3_cd14, env3_cd15, GND},
+    {env3_cd13, env3_cnt_dir, env3_cd07},
+    {env3_cd15, env3_cd07, GND},
+    {env3_cd02, env3_cnt_dir, GND},
+    {env3_cd05, env3_cnt_dir, GND},
+
+    {sid_clk1, env3_cnt_dir, env3_cd20},
+    {env3_cd20, env3_cd21, GND},
+    {env3_cd21, env3_cd50, GND},
+    {env3_cd50, Vcc, env3_r0},
+    {env3_cd21, env3_r0, GND},
+    {sid_clk2, env3_cd21, env3_cd22},
+    {env3_cd22, env3_cd23, GND},
+    {sid_clk1, env3_cd23, env3_cd24},
+    {env3_cd24, env3_cd26, env3_cd27},
+    {env3_cd21, env3_cd27, GND},
+    {sid_clk1, env3_cnt_dir, env3_cd25},
+    {env3_cd25, env3_cd26, env3_cd28},
+    {env3_cnt_down, env3_cd28, GND},
+    {env3_cd24, env3_cd30, GND},
+    {env3_cd30, Vcc, env3_cnt_down},
+    {env3_cd24, env3_cnt_down, GND},
+    {env3_cnt_down, env3_cd31, GND},
+    {env3_cd31, Vcc, env3_cnt_up},
+    {env3_cnt_down, env3_cnt_up, GND},
+    {env3_cd26, env3_cd40, GND},
+    {sid_clk1, env3_cd40, env3_cd41},
+    {env3_cd41, sid_clk2, env3_cnt_clk_inv},
+    {env3_cd26, env3_cnt_clk_inv, GND},
+    {sid_clk1, env3_cnt_clk_inv, GND},
+    {sid_clk1, env3_cd26, env3_cd42},
+    {env3_cd42, sid_clk2, env3_cnt_clk},
+    {env3_cd40, env3_cnt_clk, GND},
+    {sid_clk1, env3_cnt_clk, GND},
+
+    {sid_clk1, env3_0x00, env3_ce01},
+    {env3_ce01, env3_ce02, GND},
+    {sid_clk2, env3_ce02, env3_ce03},
+    {env3_ce03, env3_ce04, GND},
+    {sid_clk1, env3_ce04, env3_ce05},
+    {env3_ce05, env3_ce06, GND},
+    {env3_ce04, env3_ce07, env3_ce08},
+    {env3_ce06, env3_ce08, GND},
+    {env3_ce10, env3_ce07, GND},
+    {env3_gate_cur, env3_ce10, env3_ce11},
+    {env3_not_gate_prev, env3_ce11, GND},
+    {sid_rst, env3_ce10, GND},
+    {env3_ce07, env3_ce10, GND},
+    {sid_clk1, env3_ce10, env3_ce12},
+    {env3_ce12, env3_cnt_ena, GND},
+    {env3_rel_rst, env3_cnt_ena, GND},
+    {env3_cnt_sust, env3_cnt_ena, GND},
+    {sid_clk2, env3_cnt_ena, env3_ce13},
+    {env3_ce13, env3_cnt_cry0, GND},
 };
