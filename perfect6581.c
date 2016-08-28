@@ -219,6 +219,12 @@ readWav3(void *state)
     return readNodes(state, 12, (nodenum_t[]){ wav3_bit0_out, wav3_bit1_out, wav3_bit2_out, wav3_bit3_out, wav3_bit4_out, wav3_bit5_out, wav3_bit6_out, wav3_bit7_out, wav3_bit8_out, wav3_bit9_out, wav3_bit10_out, wav3_bit11_out });
 }
 
+uint8_t
+readEnvCnt(void *state)
+{
+    return readNodes(state, 8, (nodenum_t[]){ env3_bit0_out, env3_bit1_out, env3_bit2_out, env3_bit3_out, env3_bit4_out, env3_bit5_out, env3_bit6_out, env3_bit7_out });
+}
+
 /************************************************************
  *
  * Main Clock Loop
@@ -262,7 +268,7 @@ step(void *state)
         //}
             //printf("Voice 3: %04X\n", readVoi3(state)); //DEBUG
         printf("env3_gate_cur: %s\n", isNodeHigh(state, env3_gate_cur) ? "high" : "low"); //DEBUG
-        printf("env3_not_gate_prev: %s\n", isNodeHigh(state, env3_not_gate_prev) ? "high" : "low"); //DEBUG
+        printf("env3_gate_prev_inv: %s\n", isNodeHigh(state, env3_gate_prev_inv) ? "high" : "low"); //DEBUG
         printf("env3_cnt_dir: %s\n", isNodeHigh(state, env3_cnt_dir) ? "high" : "low"); //DEBUG
         
         printf("env3_cnt_clk: %s\n", isNodeHigh(state, env3_cnt_clk) ? "high" : "low"); //DEBUG
@@ -270,6 +276,7 @@ step(void *state)
         printf("env3_cnt_up: %s\n", isNodeHigh(state, env3_cnt_up) ? "high" : "low"); //DEBUG
         printf("env3_cnt_down: %s\n", isNodeHigh(state, env3_cnt_down) ? "high" : "low"); //DEBUG
         printf("env3_cnt_cry0: %s\n", isNodeHigh(state, env3_cnt_cry0) ? "high" : "low"); //DEBUG
+        printf("cnt: %02X\n", readEnvCnt(state)); //DEBUG
         printf("\n");
     }
 #endif
