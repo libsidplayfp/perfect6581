@@ -267,8 +267,8 @@ step(void *state)
         //    printf("noi3: %04X\n", readVoi3(state)); //DEBUG
         //}
             //printf("Voice 3: %04X\n", readVoi3(state)); //DEBUG
-        printf("env3_gate_cur: %s\n", isNodeHigh(state, env3_gate_cur) ? "high" : "low"); //DEBUG
-        printf("env3_gate_prev_inv: %s\n", isNodeHigh(state, env3_gate_prev_inv) ? "high" : "low"); //DEBUG
+        //printf("env3_gate_cur: %s\n", isNodeHigh(state, env3_gate_cur) ? "high" : "low"); //DEBUG
+        //printf("env3_gate_prev_inv: %s\n", isNodeHigh(state, env3_gate_prev_inv) ? "high" : "low"); //DEBUG
         printf("env3_cnt_dir: %s\n", isNodeHigh(state, env3_cnt_dir) ? "high" : "low"); //DEBUG
         
         printf("env3_cnt_clk: %s\n", isNodeHigh(state, env3_cnt_clk) ? "high" : "low"); //DEBUG
@@ -332,7 +332,7 @@ chipStatus(void *state)
     uint8_t d = readDataBus(state);
     BOOL r_w = isNodeHigh(state, rw);
 
-    printf("halfcyc:%d phi0:%d AB:%02X D:%02X RnW:%d CTL3:%02X FREQ3:%04X PW3:%04X Acc3:%06X Noi3:%06X",
+    printf("halfcyc:%d phi0:%d AB:%02X D:%02X RnW:%d CTL3:%02X FREQ3:%04X PW3:%04X Acc3:%06X Noi3:%06X ENV3:%04X",
                 cycle,
                 clk,
                 a,
@@ -342,7 +342,9 @@ chipStatus(void *state)
                 readFreq3(state),
                 readPw3(state),
                 readAcc3(state),
-                readNoi3(state));
+                readNoi3(state),
+                readEnvCnt(state)
+          );
 /*
     if (clk) {
         if (r_w)

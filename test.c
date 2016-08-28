@@ -50,11 +50,14 @@ main()
     // set freq3 hi
     writeReg(state, 0x0F, 0x10);
 
+    // set sr
+    writeReg(state, 0x14, 0xe0);
+
     // Set gate on
     writeReg(state, 0x12, 0x11);
 printf("*** gate on\n\n");
-/*
-    for (int i=0; i<0xfff; i++)
+
+    for (int i=0; i<0x7f; i++)
     {
         step(state);
         step(state);
@@ -63,12 +66,6 @@ printf("*** gate on\n\n");
 
     // read from OSC3
     //printf("*** OSC3: %02X\n\n", readReg(state, 0x1B));
-*/
-    step(state);
-    step(state);
-
-    step(state);
-    step(state);
 
     step(state);
     step(state);

@@ -1415,9 +1415,54 @@ enum {
     env3_r3_4,
     env3_r3_5,
     env3_r3_out,
+    // sustain comparator
+    env3_cnt_sus,
+    env3_bit0_cmp01,
+    env3_bit0_cmp02,
+    env3_bit0_cmp03,
+    env3_bit0_cmp04,
+    env3_bit1_cmp01,
+    env3_bit1_cmp02,
+    env3_bit1_cmp03,
+    env3_bit1_cmp04,
+    env3_bit2_cmp01,
+    env3_bit2_cmp02,
+    env3_bit2_cmp03,
+    env3_bit2_cmp04,
+    env3_bit3_cmp01,
+    env3_bit3_cmp02,
+    env3_bit3_cmp03,
+    env3_bit3_cmp04,
+    env3_bit4_cmp01,
+    env3_bit4_cmp02,
+    env3_bit4_cmp03,
+    env3_bit4_cmp04,
+    env3_bit5_cmp01,
+    env3_bit5_cmp02,
+    env3_bit5_cmp03,
+    env3_bit5_cmp04,
+    env3_bit6_cmp01,
+    env3_bit6_cmp02,
+    env3_bit6_cmp03,
+    env3_bit6_cmp04,
+    env3_bit7_cmp01,
+    env3_bit7_cmp02,
+    env3_bit7_cmp03,
+    env3_bit7_cmp04,
+    // fixpoint found
+    env3_fixpoint,
+    env3_ff0_fix,
+    env3_ff0_sel,
+    env3_ff1_fix,
+    env3_ff1_sel,
+    env3_ff2_fix,
+    env3_ff2_sel,
+    env3_ff3_fix,
+    env3_ff3_sel,
+    env3_ff4_fix,
+    env3_ff4_sel,
 
     env3_rel_rst = GND, //FIXME
-    env3_cnt_sust = GND, //FIXME
 
     // Aliases
     Vdd = Vcc,
@@ -1669,35 +1714,52 @@ netlist_6581_node_is_pullup[] = {
     0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0,
     0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1,
     // counter
-    1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0,    // bit0
+    1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1,    // bit0
     1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, // bit1
-    1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0,    // bit2
+    1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1,    // bit2
     1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, // bit3
-    1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0,    // bit4
+    1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1,    // bit4
     1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, // bit5
-    1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0,    // bit6
+    1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1,    // bit6
     1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, // bit7
     //
     1, 1, 1, 1, 1, 1, 1,
     // ADSR gates
     1, 1,
     // ADSR registers
-    0, 1, 1, 1, 0, 0,
-    0, 1, 1, 1, 0, 0,
-    0, 1, 1, 1, 0, 0,
-    0, 1, 1, 1, 0, 0,
-    0, 1, 1, 1, 0, 0,
-    0, 1, 1, 1, 0, 0,
-    0, 1, 1, 1, 0, 0,
-    0, 1, 1, 1, 0, 0,
-    0, 1, 1, 0, 1,
-    0, 1, 1, 0, 1,
-    0, 1, 1, 0, 1,
-    0, 1, 1, 0, 1,
-    0, 1, 1, 1, 0, 0,
-    0, 1, 1, 1, 0, 0,
-    0, 1, 1, 1, 0, 0,
-    0, 1, 1, 1, 0, 0,
+    0, 1, 1, 1, 0, 0, // AD bit0
+    0, 1, 1, 1, 0, 0, // AD bit1
+    0, 1, 1, 1, 0, 0, // AD bit2
+    0, 1, 1, 1, 0, 0, // AD bit3
+    0, 1, 1, 1, 0, 0, // AD bit4
+    0, 1, 1, 1, 0, 0, // AD bit5
+    0, 1, 1, 1, 0, 0, // AD bit6
+    0, 1, 1, 1, 0, 0, // AD bit7
+    0, 1, 1, 0, 1,    // SR bit0
+    0, 1, 1, 0, 1,    // SR bit1
+    0, 1, 1, 0, 1,    // SR bit2
+    0, 1, 1, 0, 1,    // SR bit3
+    0, 1, 1, 1, 0, 0, // SR bit4
+    0, 1, 1, 1, 0, 0, // SR bit5
+    0, 1, 1, 1, 0, 0, // SR bit6
+    0, 1, 1, 1, 0, 0, // SR bit7
+    // sustain comparator
+    1,
+    0, 1, 1, 0, // bit0
+    0, 1, 1, 0, // bit1
+    0, 1, 1, 0, // bit2
+    0, 1, 1, 0, // bit3
+    0, 1, 1, 0, // bit4
+    0, 1, 1, 0, // bit5
+    0, 1, 1, 0, // bit6
+    0, 1, 1, 0, // bit7
+    // fixpoint found
+    1,
+    1, 1, // bit0
+    1, 1, // bit1
+    1, 1, // bit2
+    1, 1, // bit3
+    1, 1, // bit4
 };
 
 // enhancement-mode (pull-down and pass) transistors
@@ -3768,7 +3830,7 @@ netlist_6581_transdefs[] = {
     {sid_clk1, env3_ce10, env3_ce12},
     {env3_ce12, env3_cnt_ena, GND},
     {env3_rel_rst, env3_cnt_ena, GND},
-    {env3_cnt_sust, env3_cnt_ena, GND},
+    {env3_cnt_sus, env3_cnt_ena, GND},
     {sid_clk2, env3_cnt_ena, env3_ce13},
     {env3_ce13, env3_cnt_cry0, GND},
 
@@ -3993,7 +4055,7 @@ netlist_6581_transdefs[] = {
     {sid_clk1, env3_a0_2, env3_a0_5},
     {env3_a0_5, env3_a0_4, GND},
     {env3_atk_gate, env3_a0_4, env3_a0_out},
-    {reg13, db0, env3_a1_1},
+    {reg13, db1, env3_a1_1},
     {cl_a, reg13, GND},
     {env3_a1_1, env3_a1_2, GND},
     {env3_a1_2, env3_a1_3, GND},
@@ -4001,7 +4063,7 @@ netlist_6581_transdefs[] = {
     {sid_clk1, env3_a1_2, env3_a1_5},
     {env3_a1_5, env3_a1_4, GND},
     {env3_atk_gate, env3_a1_4, env3_a1_out},
-    {reg13, db0, env3_a2_1},
+    {reg13, db2, env3_a2_1},
     {cl_a, reg13, GND},
     {env3_a2_1, env3_a2_2, GND},
     {env3_a2_2, env3_a2_3, GND},
@@ -4009,7 +4071,7 @@ netlist_6581_transdefs[] = {
     {sid_clk1, env3_a2_2, env3_a2_5},
     {env3_a2_5, env3_a2_4, GND},
     {env3_atk_gate, env3_a2_4, env3_a2_out},
-    {reg13, db0, env3_a0_1},
+    {reg13, db3, env3_a0_1},
     {cl_a, reg13, GND},
     {env3_a3_1, env3_a3_2, GND},
     {env3_a3_2, env3_a3_3, GND},
@@ -4018,7 +4080,7 @@ netlist_6581_transdefs[] = {
     {env3_a3_5, env3_a3_4, GND},
     {env3_atk_gate, env3_a3_4, env3_a3_out},
     
-    {reg13, db0, env3_d0_1},
+    {reg13, db4, env3_d0_1},
     {cl_a, reg13, GND},
     {env3_d0_1, env3_d0_2, GND},
     {env3_d0_2, env3_d0_3, GND},
@@ -4026,7 +4088,7 @@ netlist_6581_transdefs[] = {
     {sid_clk1, env3_d0_2, env3_d0_5},
     {env3_d0_5, env3_d0_4, GND},
     {env3_dcy_gate, env3_d0_4, env3_d0_out},
-    {reg13, db0, env3_d1_1},
+    {reg13, db5, env3_d1_1},
     {cl_a, reg13, GND},
     {env3_d1_1, env3_d1_2, GND},
     {env3_d1_2, env3_d1_3, GND},
@@ -4034,7 +4096,7 @@ netlist_6581_transdefs[] = {
     {sid_clk1, env3_d1_2, env3_d1_5},
     {env3_d1_5, env3_d1_4, GND},
     {env3_dcy_gate, env3_d1_4, env3_d1_out},
-    {reg13, db0, env3_d2_1},
+    {reg13, db6, env3_d2_1},
     {cl_a, reg13, GND},
     {env3_d2_1, env3_d2_2, GND},
     {env3_d2_2, env3_d2_3, GND},
@@ -4042,7 +4104,7 @@ netlist_6581_transdefs[] = {
     {sid_clk1, env3_d2_2, env3_d2_5},
     {env3_d2_5, env3_d2_4, GND},
     {env3_dcy_gate, env3_d2_4, env3_d2_out},
-    {reg13, db0, env3_d0_1},
+    {reg13, db7, env3_d0_1},
     {cl_a, reg13, GND},
     {env3_d3_1, env3_d3_2, GND},
     {env3_d3_2, env3_d3_3, GND},
@@ -4058,29 +4120,29 @@ netlist_6581_transdefs[] = {
     {sid_clk1, env3_s0_3, env3_s0_1},
     {sid_clk1, env3_s0_2, env3_s0_5},
     {env3_s0_5, env3_s0_out, GND},
-    {reg14, db0, env3_s1_1},
+    {reg14, db1, env3_s1_1},
     {cl_a, reg14, GND},
     {env3_s1_1, env3_s1_2, GND},
     {env3_s1_2, env3_s1_3, GND},
     {sid_clk1, env3_s1_3, env3_s1_1},
     {sid_clk1, env3_s1_2, env3_s1_5},
     {env3_s1_5, env3_s1_out, GND},
-    {reg14, db0, env3_s2_1},
+    {reg14, db2, env3_s2_1},
     {cl_a, reg14, GND},
     {env3_s2_1, env3_s2_2, GND},
     {env3_s2_2, env3_s2_3, GND},
     {sid_clk1, env3_s2_3, env3_s2_1},
     {sid_clk1, env3_s2_2, env3_s2_5},
     {env3_s2_5, env3_s2_out, GND},
-    {reg14, db0, env3_s0_1},
+    {reg14, db3, env3_s0_1},
     {cl_a, reg14, GND},
     {env3_s3_1, env3_s3_2, GND},
     {env3_s3_2, env3_s3_3, GND},
     {sid_clk1, env3_s3_3, env3_s3_1},
     {sid_clk1, env3_s3_2, env3_s3_5},
     {env3_s3_5, env3_s3_out, GND},
-    
-    {reg14, db0, env3_r0_1},
+
+    {reg14, db4, env3_r0_1},
     {cl_a, reg14, GND},
     {env3_r0_1, env3_r0_2, GND},
     {env3_r0_2, env3_r0_3, GND},
@@ -4088,7 +4150,7 @@ netlist_6581_transdefs[] = {
     {sid_clk1, env3_r0_2, env3_r0_5},
     {env3_r0_5, env3_r0_4, GND},
     {env3_rel_gate, env3_r0_4, env3_r0_out},
-    {reg14, db0, env3_r1_1},
+    {reg14, db5, env3_r1_1},
     {cl_a, reg14, GND},
     {env3_r1_1, env3_r1_2, GND},
     {env3_r1_2, env3_r1_3, GND},
@@ -4096,7 +4158,7 @@ netlist_6581_transdefs[] = {
     {sid_clk1, env3_r1_2, env3_r1_5},
     {env3_r1_5, env3_r1_4, GND},
     {env3_rel_gate, env3_r1_4, env3_r1_out},
-    {reg14, db0, env3_r2_1},
+    {reg14, db6, env3_r2_1},
     {cl_a, reg14, GND},
     {env3_r2_1, env3_r2_2, GND},
     {env3_r2_2, env3_r2_3, GND},
@@ -4104,7 +4166,7 @@ netlist_6581_transdefs[] = {
     {sid_clk1, env3_r2_2, env3_r2_5},
     {env3_r2_5, env3_r2_4, GND},
     {env3_rel_gate, env3_r2_4, env3_r2_out},
-    {reg14, db0, env3_r0_1},
+    {reg14, db7, env3_r0_1},
     {cl_a, reg14, GND},
     {env3_r3_1, env3_r3_2, GND},
     {env3_r3_2, env3_r3_3, GND},
@@ -4112,4 +4174,99 @@ netlist_6581_transdefs[] = {
     {sid_clk1, env3_r3_2, env3_r3_5},
     {env3_r3_5, env3_r3_4, GND},
     {env3_rel_gate, env3_r3_4, env3_r3_out},
+    // sustain comparator
+    {env3_r0, env3_cnt_sus, GND},
+    {env3_r1_inv, env3_cnt_sus, GND},
+    {sid_clk1, env3_bit0_out, env3_bit0_cmp01},
+    {env3_bit0_cmp01, env3_bit0_cmp02, GND},
+    {env3_s0_out, env3_bit0_cmp02, GND},
+    {env3_bit0_cmp01, env3_bit0_cmp03, env3_bit0_cmp04},
+    {env3_s0_out, env3_bit0_cmp04, GND},
+    {env3_bit0_cmp02, env3_bit0_cmp03, GND},
+    {env3_bit0_cmp03, env3_cnt_sus, GND},
+    {sid_clk1, env3_bit1_out, env3_bit1_cmp01},
+    {env3_bit1_cmp01, env3_bit1_cmp02, GND},
+    {env3_s1_out, env3_bit1_cmp02, GND},
+    {env3_bit1_cmp01, env3_bit1_cmp03, env3_bit1_cmp04},
+    {env3_s1_out, env3_bit1_cmp04, GND},
+    {env3_bit1_cmp02, env3_bit1_cmp03, GND},
+    {env3_bit1_cmp03, env3_cnt_sus, GND},
+    {sid_clk1, env3_bit2_out, env3_bit2_cmp01},
+    {env3_bit2_cmp01, env3_bit2_cmp02, GND},
+    {env3_s2_out, env3_bit2_cmp02, GND},
+    {env3_bit2_cmp01, env3_bit2_cmp03, env3_bit2_cmp04},
+    {env3_s2_out, env3_bit2_cmp04, GND},
+    {env3_bit2_cmp02, env3_bit2_cmp03, GND},
+    {env3_bit2_cmp03, env3_cnt_sus, GND},
+    {sid_clk1, env3_bit3_out, env3_bit3_cmp01},
+    {env3_bit3_cmp01, env3_bit3_cmp02, GND},
+    {env3_s3_out, env3_bit3_cmp02, GND},
+    {env3_bit3_cmp01, env3_bit3_cmp03, env3_bit3_cmp04},
+    {env3_s3_out, env3_bit3_cmp04, GND},
+    {env3_bit3_cmp02, env3_bit3_cmp03, GND},
+    {env3_bit3_cmp03, env3_cnt_sus, GND},
+    {sid_clk1, env3_bit4_out, env3_bit4_cmp01},
+    {env3_bit4_cmp01, env3_bit4_cmp02, GND},
+    {env3_s0_out, env3_bit4_cmp02, GND},
+    {env3_bit4_cmp01, env3_bit4_cmp03, env3_bit4_cmp04},
+    {env3_s0_out, env3_bit4_cmp04, GND},
+    {env3_bit4_cmp02, env3_bit4_cmp03, GND},
+    {env3_bit4_cmp03, env3_cnt_sus, GND},
+    {sid_clk1, env3_bit5_out, env3_bit5_cmp01},
+    {env3_bit5_cmp01, env3_bit5_cmp02, GND},
+    {env3_s1_out, env3_bit5_cmp02, GND},
+    {env3_bit5_cmp01, env3_bit5_cmp03, env3_bit5_cmp04},
+    {env3_s1_out, env3_bit5_cmp04, GND},
+    {env3_bit5_cmp02, env3_bit5_cmp03, GND},
+    {env3_bit5_cmp03, env3_cnt_sus, GND},
+    {sid_clk1, env3_bit6_out, env3_bit6_cmp01},
+    {env3_bit6_cmp01, env3_bit6_cmp02, GND},
+    {env3_s2_out, env3_bit6_cmp02, GND},
+    {env3_bit6_cmp01, env3_bit6_cmp03, env3_bit6_cmp04},
+    {env3_s2_out, env3_bit6_cmp04, GND},
+    {env3_bit6_cmp02, env3_bit6_cmp03, GND},
+    {env3_bit6_cmp03, env3_cnt_sus, GND},
+    {sid_clk1, env3_bit7_out, env3_bit7_cmp01},
+    {env3_bit7_cmp01, env3_bit7_cmp02, GND},
+    {env3_s3_out, env3_bit7_cmp02, GND},
+    {env3_bit7_cmp01, env3_bit7_cmp03, env3_bit7_cmp04},
+    {env3_s3_out, env3_bit7_cmp04, GND},
+    {env3_bit7_cmp02, env3_bit7_cmp03, GND},
+    {env3_bit7_cmp03, env3_cnt_sus, GND},
+    // fixpoint found
+    {env3_0x36, env3_ff0_fix, GND},
+    {env3_0xFF, env3_ff0_fix, GND},
+    {sid_rst, env3_ff0_fix, GND},
+    {env3_ff0_sel, env3_ff0_fix, GND},
+    {env3_ff0_fix, env3_ff0_sel, GND},
+    {env3_0x5D, env3_ff0_sel, GND},
+    {env3_ff0_sel, env3_fixpoint, GND},
+    {env3_0x1A, env3_ff1_fix, GND},
+    {env3_0x5D, env3_ff1_fix, GND},
+    {sid_rst, env3_ff1_fix, GND},
+    {env3_ff1_sel, env3_ff1_fix, GND},
+    {env3_ff1_fix, env3_ff1_sel, GND},
+    {env3_0x36, env3_ff1_sel, GND},
+    {env3_ff1_sel, env3_fixpoint, GND},
+    {env3_0x0E, env3_ff2_fix, GND},
+    {env3_0x36, env3_ff2_fix, GND},
+    {sid_rst, env3_ff2_fix, GND},
+    {env3_ff2_sel, env3_ff2_fix, GND},
+    {env3_ff2_fix, env3_ff2_sel, GND},
+    {env3_0x1A, env3_ff2_sel, GND},
+    {env3_ff2_sel, env3_fixpoint, GND},
+    {env3_0x06, env3_ff3_fix, GND},
+    {env3_0x1A, env3_ff3_fix, GND},
+    {sid_rst, env3_ff3_fix, GND},
+    {env3_ff3_sel, env3_ff3_fix, GND},
+    {env3_ff3_fix, env3_ff3_sel, GND},
+    {env3_0x0E, env3_ff3_sel, GND},
+    {env3_ff3_sel, env3_fixpoint, GND},
+    {env3_0x00, env3_ff4_fix, GND},
+    {env3_0x0E, env3_ff4_fix, GND},
+    {sid_rst, env3_ff4_fix, GND},
+    {env3_ff4_sel, env3_ff4_fix, GND},
+    {env3_ff4_fix, env3_ff4_sel, GND},
+    {env3_0x06, env3_ff4_sel, GND},
+    {env3_ff4_sel, env3_fixpoint, GND},
 };
