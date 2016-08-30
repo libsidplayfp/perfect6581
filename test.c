@@ -73,11 +73,13 @@ printf("*** gate on\n\n");
     // Set test on
     writeReg(state, 0x12, 0x08);
 printf("*** gate off\n\n");
-    step(state);
-    step(state);
 
-    step(state);
-    step(state);
+    for (int i=0; i<0x7f; i++)
+    {
+        step(state);
+        step(state);
+        //printf("*** Wave 3: %03X\n", readWav3(state));
+    }
 
     chipStatus(state);
 

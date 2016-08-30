@@ -4,7 +4,7 @@ OBJS+=test.o
 #CC=clang
 CFLAGS+=-std=c99
 
-all: test
+all: clean test
 
 test: $(OBJS)
 	$(CC) -o test $(OBJS)

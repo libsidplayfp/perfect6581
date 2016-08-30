@@ -225,6 +225,36 @@ readEnvCnt(void *state)
     return readNodes(state, 8, (nodenum_t[]){ env3_bit0_out, env3_bit1_out, env3_bit2_out, env3_bit3_out, env3_bit4_out, env3_bit5_out, env3_bit6_out, env3_bit7_out });
 }
 
+uint8_t
+readLfsr15Low(void *state)
+{
+    return readNodes(state, 8, (nodenum_t[]){ env3_lfsrA_bit00_out, env3_lfsrA_bit01_out, env3_lfsrA_bit02_out, env3_lfsrA_bit03_out, env3_lfsrA_bit04_out, env3_lfsrA_bit05_out, env3_lfsrA_bit06_out, env3_lfsrA_bit07_out });
+}
+
+uint8_t
+readLfsr15High(void *state)
+{
+	return readNodes(state, 7, (nodenum_t[]){ env3_lfsrA_bit08_out, env3_lfsrA_bit09_out, env3_lfsrA_bit10_out, env3_lfsrA_bit11_out, env3_lfsrA_bit12_out, env3_lfsrA_bit13_out, env3_lfsrA_bit14_out });
+}
+
+uint16_t
+readLfsr15(void *state)
+{
+    return (readLfsr15High(state) << 8) | readLfsr15Low(state);
+}
+
+uint8_t
+readLfsr5(void *state)
+{
+    return readNodes(state, 5, (nodenum_t[]){ env3_lfsrB_bit00_out, env3_lfsrB_bit01_out, env3_lfsrB_bit02_out, env3_lfsrB_bit03_out, env3_lfsrB_bit04_out });
+}
+
+uint8_t
+readADRtoLUT(void *state)
+{
+    return readNodes(state, 4, (nodenum_t[]){ env3_adr_00_out, env3_adr_01_out, env3_adr_02_out, env3_adr_03_out });
+}
+
 /************************************************************
  *
  * Main Clock Loop
@@ -259,23 +289,31 @@ step(void *state)
         //printf("/write: %s\n", isNodeHigh(state, write) ? "high" : "low"); //DEBUG
         //printf("acc3: %06X\n", readAcc3(state)); //DEBUG
         //printf("pw3: %04X\n", readPw3(state)); //DEBUG
-            //printf("pul_out: %s\n\n", isNodeHigh(state, pul_out) ? "high" : "low"); //DEBUG
+        //printf("pul_out: %s\n\n", isNodeHigh(state, pul_out) ? "high" : "low"); //DEBUG
         //printf("tri3: %04X\n", readTri3(state)); //DEBUG
         //printf("tri3 xor: %s\n\n", isNodeHigh(state, tri3_xor) ? "high" : "low"); //DEBUG
         //if (isNodeHigh(state, noi3_clk_lc))
         //{
         //    printf("noi3: %04X\n", readVoi3(state)); //DEBUG
         //}
-            //printf("Voice 3: %04X\n", readVoi3(state)); //DEBUG
+        //printf("Voice 3: %04X\n", readVoi3(state)); //DEBUG
         //printf("env3_gate_cur: %s\n", isNodeHigh(state, env3_gate_cur) ? "high" : "low"); //DEBUG
         //printf("env3_gate_prev_inv: %s\n", isNodeHigh(state, env3_gate_prev_inv) ? "high" : "low"); //DEBUG
         printf("env3_cnt_dir: %s\n", isNodeHigh(state, env3_cnt_dir) ? "high" : "low"); //DEBUG
-        
+
         printf("env3_cnt_clk: %s\n", isNodeHigh(state, env3_cnt_clk) ? "high" : "low"); //DEBUG
         printf("env3_cnt_clk_inv: %s\n", isNodeHigh(state, env3_cnt_clk_inv) ? "high" : "low"); //DEBUG
         printf("env3_cnt_up: %s\n", isNodeHigh(state, env3_cnt_up) ? "high" : "low"); //DEBUG
         printf("env3_cnt_down: %s\n", isNodeHigh(state, env3_cnt_down) ? "high" : "low"); //DEBUG
         printf("env3_cnt_cry0: %s\n", isNodeHigh(state, env3_cnt_cry0) ? "high" : "low"); //DEBUG
+        printf("lfsr15: %04X\n", readLfsr15(state)); //DEBUG
+        printf("env3_lfsrA_rst_B: %s\n", isNodeHigh(state, env3_lfsrA_rst_B) ? "high" : "low"); //DEBUG
+        printf("lfsr5: %02X\n", readLfsr5(state)); //DEBUG
+        //printf("env3_lfsrB_rst_rel: %s\n", isNodeHigh(state, env3_lfsrB_rst_rel) ? "high" : "low"); //DEBUG
+        //printf("env3_fixpoint: %s\n", isNodeHigh(state, env3_fixpoint) ? "high" : "low"); //DEBUG
+        //printf("env3_0x1B: %s\n", isNodeHigh(state, env3_0x1B) ? "high" : "low"); //DEBUG
+        //printf("ADRtoLUT: %02X\n", readADRtoLUT(state)); //DEBUG
+        //printf("env3_cnt_sus: %s\n", isNodeHigh(state, env3_cnt_sus) ? "high" : "low"); //DEBUG
         printf("cnt: %02X\n", readEnvCnt(state)); //DEBUG
         printf("\n");
     }
@@ -332,7 +370,7 @@ chipStatus(void *state)
     uint8_t d = readDataBus(state);
     BOOL r_w = isNodeHigh(state, rw);
 
-    printf("halfcyc:%d phi0:%d AB:%02X D:%02X RnW:%d CTL3:%02X FREQ3:%04X PW3:%04X Acc3:%06X Noi3:%06X ENV3:%04X",
+    printf("halfcyc:%d phi0:%d AB:%02X D:%02X RnW:%d CTL3:%02X FREQ3:%04X PW3:%04X Acc3:%06X Noi3:%06X ENV3:%02X",
                 cycle,
                 clk,
                 a,
