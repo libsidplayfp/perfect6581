@@ -22,12 +22,19 @@
  */
 
 #include <stdio.h>
+
 #include "types.h"
 #include "netlist_sim.h"
 /* nodes & transistors */
 #include "netlist_6581.h"
 
 #define DEBUG
+
+#ifdef DEBUG
+#  define debug(format, ...)       printf(format, ## __VA_ARGS__)
+#else
+#  define debug(format, ...)       // do nothing
+#endif
 
 /************************************************************
  *
@@ -48,13 +55,13 @@ void setRw(state_t *state, unsigned int val)
 void
 writeData(void *state, uint8_t d)
 {
-        writeNodes(state, 8, (nodenum_t[]){ D0, D1, D2, D3, D4, D5, D6, D7 }, d);
+    writeNodes(state, 8, (nodenum_t[]){ D0, D1, D2, D3, D4, D5, D6, D7 }, d);
 }
 
 void
 writeAddress(void *state, uint8_t d)
 {
-        writeNodes(state, 5, (nodenum_t[]){ A0, A1, A2, A3, A4 }, d);
+    writeNodes(state, 5, (nodenum_t[]){ A0, A1, A2, A3, A4 }, d);
 }
 
 uint8_t
@@ -78,7 +85,7 @@ readDataBus(void *state)
 uint8_t
 readAddressBus(void *state)
 {
-        return readNodes(state, 5, (nodenum_t[]){ A0_high, A1_high, A2_high, A3_high, A4_high });
+    return readNodes(state, 5, (nodenum_t[]){ A0_high, A1_high, A2_high, A3_high, A4_high });
 }
 
 //BOOL
@@ -255,6 +262,18 @@ readADRtoLUT(void *state)
     return readNodes(state, 4, (nodenum_t[]){ env3_adr_00_out, env3_adr_01_out, env3_adr_02_out, env3_adr_03_out });
 }
 
+uint8_t
+readSus(void *state)
+{
+    return readNodes(state, 4, (nodenum_t[]){ env3_s0_out, env3_s1_out, env3_s2_out, env3_s3_out });
+}
+
+uint8_t
+readSel(void *state)
+{
+    return readNodes(state, 5, (nodenum_t[]){ env3_ff0_sel, env3_ff1_sel, env3_ff2_sel, env3_ff3_sel, env3_ff4_sel });
+}
+
 /************************************************************
  *
  * Main Clock Loop
@@ -272,50 +291,53 @@ step(void *state)
     setNode(state, Phi2, clk);
     recalcNodeList(state);
 
-    /* handle memory reads and writes */
-    //if (clk)
-    //    handleMemory(state);
+    //debug("Phi2: %s\n", isNodeHigh(state, Phi2) ? "high" : "low");
+	//debug("cl_a: %s\n", isNodeHigh(state, cl_a) ? "high" : "low");
+
+	//debug("clk1: %s\n", isNodeHigh(state, sid_clk1) ? "high" : "low");
+	//debug("clk2: %s\n\n", isNodeHigh(state, sid_clk2) ? "high" : "low");
+
 #ifdef DEBUG
     if (clk)
     {
-        //printf("Phi2: %s\n", isNodeHigh(state, Phi2) ? "high" : "low"); //DEBUG
-        //printf("clk1: %s\n", isNodeHigh(state, sid_clk1) ? "high" : "low"); //DEBUG
-        //printf("clk2: %s\n\n", isNodeHigh(state, sid_clk2) ? "high" : "low"); //DEBUG
+        //debug("/res: %s\n", isNodeHigh(state, res) ? "high" : "low");
+        //debug("sid_rst: %s\n\n", isNodeHigh(state, sid_rst) ? "high" : "low");
 
-        //printf("/res: %s\n", isNodeHigh(state, res) ? "high" : "low"); //DEBUG
-        //printf("sid_rst: %s\n\n", isNodeHigh(state, sid_rst) ? "high" : "low"); //DEBUG
-
-        //printf("/read: %s\n", isNodeHigh(state, read) ? "high" : "low"); //DEBUG
-        //printf("/write: %s\n", isNodeHigh(state, write) ? "high" : "low"); //DEBUG
-        //printf("acc3: %06X\n", readAcc3(state)); //DEBUG
-        //printf("pw3: %04X\n", readPw3(state)); //DEBUG
-        //printf("pul_out: %s\n\n", isNodeHigh(state, pul_out) ? "high" : "low"); //DEBUG
-        //printf("tri3: %04X\n", readTri3(state)); //DEBUG
-        //printf("tri3 xor: %s\n\n", isNodeHigh(state, tri3_xor) ? "high" : "low"); //DEBUG
+        //debug("/read: %s\n", isNodeHigh(state, read) ? "high" : "low");
+        //debug("/write: %s\n", isNodeHigh(state, write) ? "high" : "low");
+        //debug("acc3: %06X\n", readAcc3(state));
+        //debug("pw3: %04X\n", readPw3(state));
+        //debug("pul_out: %s\n\n", isNodeHigh(state, pul_out) ? "high" : "low");
+        //debug("tri3: %04X\n", readTri3(state));
+        //debug("tri3 xor: %s\n\n", isNodeHigh(state, tri3_xor) ? "high" : "low");
         //if (isNodeHigh(state, noi3_clk_lc))
         //{
-        //    printf("noi3: %04X\n", readVoi3(state)); //DEBUG
+        //    debug("noi3: %04X\n", readNoi3(state));
         //}
-        //printf("Voice 3: %04X\n", readVoi3(state)); //DEBUG
-        //printf("env3_gate_cur: %s\n", isNodeHigh(state, env3_gate_cur) ? "high" : "low"); //DEBUG
-        //printf("env3_gate_prev_inv: %s\n", isNodeHigh(state, env3_gate_prev_inv) ? "high" : "low"); //DEBUG
-        printf("env3_cnt_dir: %s\n", isNodeHigh(state, env3_cnt_dir) ? "high" : "low"); //DEBUG
-
-        printf("env3_cnt_clk: %s\n", isNodeHigh(state, env3_cnt_clk) ? "high" : "low"); //DEBUG
-        printf("env3_cnt_clk_inv: %s\n", isNodeHigh(state, env3_cnt_clk_inv) ? "high" : "low"); //DEBUG
-        printf("env3_cnt_up: %s\n", isNodeHigh(state, env3_cnt_up) ? "high" : "low"); //DEBUG
-        printf("env3_cnt_down: %s\n", isNodeHigh(state, env3_cnt_down) ? "high" : "low"); //DEBUG
-        printf("env3_cnt_cry0: %s\n", isNodeHigh(state, env3_cnt_cry0) ? "high" : "low"); //DEBUG
-        printf("lfsr15: %04X\n", readLfsr15(state)); //DEBUG
-        printf("env3_lfsrA_rst_B: %s\n", isNodeHigh(state, env3_lfsrA_rst_B) ? "high" : "low"); //DEBUG
-        printf("lfsr5: %02X\n", readLfsr5(state)); //DEBUG
-        //printf("env3_lfsrB_rst_rel: %s\n", isNodeHigh(state, env3_lfsrB_rst_rel) ? "high" : "low"); //DEBUG
-        //printf("env3_fixpoint: %s\n", isNodeHigh(state, env3_fixpoint) ? "high" : "low"); //DEBUG
-        //printf("env3_0x1B: %s\n", isNodeHigh(state, env3_0x1B) ? "high" : "low"); //DEBUG
-        //printf("ADRtoLUT: %02X\n", readADRtoLUT(state)); //DEBUG
-        //printf("env3_cnt_sus: %s\n", isNodeHigh(state, env3_cnt_sus) ? "high" : "low"); //DEBUG
-        printf("cnt: %02X\n", readEnvCnt(state)); //DEBUG
-        printf("\n");
+        //debug("Voice 3: %04X\n", readVoi3(state));
+        //debug("env3_gate_cur: %s\n", isNodeHigh(state, env3_gate_cur) ? "high" : "low");
+        //debug("env3_gate_prev_inv: %s\n", isNodeHigh(state, env3_gate_prev_inv) ? "high" : "low");
+        //debug("env3_cnt_dir: %s\n", isNodeHigh(state, env3_cnt_dir) ? "high" : "low");
+        //
+        //debug("env3_cnt_clk: %s\n", isNodeHigh(state, env3_cnt_clk) ? "high" : "low");
+        //debug("env3_cnt_clk_inv: %s\n", isNodeHigh(state, env3_cnt_clk_inv) ? "high" : "low");
+        //debug("env3_cnt_up: %s\n", isNodeHigh(state, env3_cnt_up) ? "high" : "low");
+        //debug("env3_cnt_down: %s\n", isNodeHigh(state, env3_cnt_down) ? "high" : "low");
+        //debug("env3_cnt_cry0: %s\n", isNodeHigh(state, env3_cnt_cry0) ? "high" : "low");
+		//debug("lfsr15: %04X\n", readLfsr15(state));
+        //debug("env3_lfsrA_rst_B: %s\n", isNodeHigh(state, env3_lfsrA_rst_B) ? "high" : "low");
+		//debug("lfsr5: %02X\n", readLfsr5(state));
+        //debug("env3_lfsrB_rst: %s\n", isNodeHigh(state, env3_lfsrB_rst) ? "high" : "low");
+        //debug("env3_lfsrB_clk_hold: %s\n", isNodeHigh(state, env3_lfsrB_clk_hold) ? "high" : "low");
+        //debug("env3_lfsrB_clk_shift: %s\n", isNodeHigh(state, env3_lfsrB_clk_shift) ? "high" : "low");
+        //debug("env3_r0: %s\n", isNodeHigh(state, env3_r0) ? "high" : "low");
+        //debug("env3_cnt_sus: %s\n", isNodeHigh(state, env3_cnt_sus) ? "high" : "low");
+		//debug("ADRtoLUT: %02X\n", readADRtoLUT(state));
+		//debug("SUS: %02X\n", readSus(state));
+        //debug("sel: %02X\n", readSel(state));
+        debug("cnt: %02X\n", readEnvCnt(state));
+        debug("\n");
+		//debug("%0d\n", readEnvCnt(state));
     }
 #endif
     cycle++;
@@ -326,9 +348,10 @@ initAndResetChip()
 {
     /* set up data structures for efficient emulation */
     nodenum_t nodes = sizeof(netlist_6581_node_is_pullup)/sizeof(*netlist_6581_node_is_pullup);
-    printf("nodes: %d\n", nodes); //DEBUG
     nodenum_t transistors = sizeof(netlist_6581_transdefs)/sizeof(*netlist_6581_transdefs);
-    printf("transistors: %d\n", transistors); //DEBUG
+
+    debug("nodes: %d\ntransistors: %d\n\n", nodes, transistors);
+
     void *state = setupNodesAndTransistors(netlist_6581_transdefs,
                                                 netlist_6581_node_is_pullup,
                                                 nodes,
@@ -346,7 +369,7 @@ initAndResetChip()
     for (int i = 0; i < 20; i++)
         step(state);
 
-    printf("... RESET done ...\n"); //DEBUG
+    debug("... RESET done ...\n");
     /* release RESET */
     setNode(state, res, 1);
     recalcNodeList(state);
@@ -383,13 +406,6 @@ chipStatus(void *state)
                 readNoi3(state),
                 readEnvCnt(state)
           );
-/*
-    if (clk) {
-        if (r_w)
-        printf(" R$%04X=$%02X", a, memory[a]);
-        else
-        printf(" W$%04X=$%02X", a, d);
-    }
-*/
+
     printf("\n");
 }

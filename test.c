@@ -5,26 +5,29 @@
 void
 writeReg(void *state, unsigned char addr, unsigned char data)
 {
+    step(state); // Phi2 low
+
     setCs(state, 0);
     setRw(state, 0);
     writeAddress(state, addr);
     writeData(state, data);
 
-    step(state);
-    step(state);
+    step(state); // Phi2 high
     setCs(state, 1);
 }
 
 unsigned char
 readReg(void *state, unsigned char addr)
 {
+    step(state); // Phi2 low
+
     setCs(state, 0);
     setRw(state, 1);
-    writeAddress(state, 0x1B);
+    writeAddress(state, addr);
 
-    step(state);
+    step(state); // Phi2 high
     unsigned char data = readData(state);
-    step(state);
+
     setCs(state, 1);
     return data;
 }
