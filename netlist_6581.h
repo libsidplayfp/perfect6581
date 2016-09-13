@@ -9,7 +9,7 @@
 #include "types.h"
 
 // Uncomment to emulate the MOS 8580 r5 model
-//#define MOS8580
+#define MOS8580
 
 // Node Names
 enum {
@@ -17,8 +17,9 @@ enum {
     Vcc = 0,
     _Vdd_,
     GND,
-    // clock TODO: 8580
+    // clock
     Phi2,
+#ifndef MOS8580
     cl01,
     cl02,
     cl03,
@@ -32,6 +33,26 @@ enum {
     cl11,
     cl12,
     cl13,
+#else
+    cl01,
+    cl02,
+    cl03,
+    cl04,
+    cl10,
+    cl11,
+    cl12,
+    cl13,
+    cl14,
+    cl15,
+    cl16,
+    cl20,
+    cl21,
+    cl22,
+    cl23,
+    cl24,
+    cl25,
+    cl26,
+#endif
     cl_a,
     cl_b,
     sid_clk1,
@@ -1453,6 +1474,7 @@ enum {
     env3_bit7_cmp04,
     // fixpoint found
     env3_fixpoint,
+
     env3_ff0_fix,
     env3_ff0_sel,
     env3_ff0_X,
@@ -1701,10 +1723,9 @@ enum {
     ctl3_pulse = ctl3_bit6_out,
     ctl3_noise = ctl3_bit7_out,
     v2_bit23 = GND, // TODO remove
-    
+
     env3_r1_inv = env3_cd01,
     env3_atk_gate = env3_r0,
-
 };
 
 /*
@@ -1721,7 +1742,20 @@ netlist_6581_node_is_pullup[] = {
     // power
     0, 0, 0,
     // clock
-    0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0,
+    0,
+#ifndef MOS8580
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1,
+#else
+    1, 1, 1, 0,
+    1, 0, 1, 0, 1, 0, 0,
+    1, 0, 1, 0, 1, 0, 0,
+#endif    
+    0, 0,
+#ifndef MOS8580
+    0, 0,
+#else
+    1, 1,
+#endif
     // reset
     0, 1, 0, 1, 0, 1,
     // cs/rw
@@ -2049,6 +2083,7 @@ netlist_6581_transdefs[] = {
     {Phi2, cl02, GND},
     {cl02, Vcc, cl_b},
     {Phi2, cl_b, GND},
+#ifndef MOS8580
     {cl_b, cl03, GND},
     {cl_b, cl04, GND},
     {sid_clk1, cl04, GND},
@@ -2068,6 +2103,49 @@ netlist_6581_transdefs[] = {
     {cl12, sid_clk2, GND},
     {cl11, Vcc, sid_clk1},
     {cl13, sid_clk1, GND},
+#else
+    {cl_b, cl03, GND},
+    {cl03, Vcc, cl04},
+    {cl_b, cl04, GND},
+
+    {cl04, cl10, GND},
+    {cl10, Vcc, cl11},
+    {cl04, cl11, GND},
+    {cl16, Vcc, cl12},
+    {cl11, cl12, GND},
+    {sid_clk1, cl12, GND},
+    {cl04, Vcc, cl13},
+    {cl11, cl13, GND},
+    {cl13, cl14, GND},
+    {cl14, Vcc, cl12},
+    {Vcc, Vcc, cl15}, // Enhancement-mode transistor
+    {cl15, cl12, cl16},
+    {cl11, cl16, GND},
+    {sid_clk1, cl16, GND},
+    {cl16, Vcc, sid_clk2},
+    {cl11, sid_clk2, GND},
+    {sid_clk1, sid_clk2, GND},
+
+    {cl11, cl20, GND},
+    {cl20, Vcc, cl21},
+    {cl11, cl21, GND},
+    {cl26, Vcc, cl22},
+    {cl21, cl22, GND},
+    {sid_clk2, cl22, GND},
+    {cl11, Vcc, cl23},
+    {cl21, cl23, GND},
+    {cl23, cl24, GND},
+    {cl24, Vcc, cl22},
+    {Vcc, Vcc, cl25}, // Enhancement-mode transistor
+    {cl25, cl22, cl26},
+    {cl21, cl26, GND},
+    {sid_clk2, cl26, GND},
+    {cl04, cl26, GND},
+    {cl26, Vcc, sid_clk1},
+    {cl21, sid_clk1, GND},
+    {sid_clk2, sid_clk1, GND},
+    {cl04, sid_clk1, GND},
+#endif
     // reset
     {GND, res, GND},
     {res, rst1, GND},
