@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Leandro Nini
+ * Copyright (c) 2016-2017 Leandro Nini
  *
  * The following is provided under terms of the Creative Commons
  * Attribution-NonCommercial-ShareAlike 3.0 Unported license:
@@ -4452,7 +4452,7 @@ netlist_6581_transdefs[] = {
     {sid_clk1, env3_a2_2, env3_a2_5},
     {env3_a2_5, env3_a2_4, GND},
     {env3_atk_gate, env3_a2_4, env3_adr2_out},
-    {reg13, db7, env3_a0_1},
+    {reg13, db7, env3_a3_1},
     {env3_a3_1, env3_a3_2, GND},
     {env3_a3_2, env3_a3_3, GND},
     {sid_clk1, env3_a3_3, env3_a3_1},
