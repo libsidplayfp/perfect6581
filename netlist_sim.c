@@ -36,13 +36,6 @@ typedef uint16_t transnum_t;
 typedef uint16_t count_t;
 /* nodenum_t is declared in types.h, because it's API */
 
-void* zalloc(size_t size)
-{
-	void* tmp = malloc(size);
-	memset(tmp, 0, size);
-	return tmp;
-}
-
 /************************************************************
  *
  * Main State Data Structure
@@ -58,7 +51,7 @@ typedef unsigned long long bitmap_t;
 typedef unsigned int bitmap_t;
 #define BITMAP_SHIFT 5
 #define BITMAP_MASK 31
-#define ONE 1
+#define ONE 1U
 #endif
 
 /* list of nodes that need to be recalculated */
@@ -382,7 +375,6 @@ getGroupValue(state_t *state)
 		case contains_vss:
 		case contains_pulldown:
 		case contains_nothing:
-		default:
 			return NO;
 	}
 }
@@ -488,45 +480,47 @@ state_t *
 setupNodesAndTransistors(netlist_transdefs *transdefs, BOOL *node_is_pullup, nodenum_t nodes, nodenum_t transistors, nodenum_t vss, nodenum_t vcc)
 {
 	/* allocate state */
-	state_t *state = zalloc(sizeof(state_t));
+	state_t *state = malloc(sizeof(state_t));
 	state->nodes = nodes;
 	state->transistors = transistors;
 	state->vss = vss;
 	state->vcc = vcc;
-	state->nodes_pullup = zalloc(WORDS_FOR_BITS(state->nodes) * sizeof(*state->nodes_pullup));
-	state->nodes_pulldown = zalloc(WORDS_FOR_BITS(state->nodes) * sizeof(*state->nodes_pulldown));
-	state->nodes_value = zalloc(WORDS_FOR_BITS(state->nodes) * sizeof(*state->nodes_value));
-	state->nodes_gates = zalloc(state->nodes * sizeof(*state->nodes_gates));
+	state->nodes_pullup = calloc(WORDS_FOR_BITS(state->nodes), sizeof(*state->nodes_pullup));
+	state->nodes_pulldown = calloc(WORDS_FOR_BITS(state->nodes), sizeof(*state->nodes_pulldown));
+	state->nodes_value = calloc(WORDS_FOR_BITS(state->nodes), sizeof(*state->nodes_value));
+	state->nodes_gates = malloc(state->nodes * sizeof(*state->nodes_gates));
 	for (count_t i = 0; i < state->nodes; i++) {
-		state->nodes_gates[i] = zalloc(state->nodes * sizeof(**state->nodes_gates));
+		state->nodes_gates[i] = calloc(state->nodes, sizeof(**state->nodes_gates));
 	}
-	state->nodes_c1c2s = zalloc(state->nodes * sizeof(*state->nodes_c1c2s));
+	state->nodes_c1c2s = malloc(state->nodes * sizeof(*state->nodes_c1c2s));
 	for (count_t i = 0; i < state->nodes; i++) {
-		state->nodes_c1c2s[i] = zalloc(2 * state->nodes * sizeof(**state->nodes_c1c2s));
+		state->nodes_c1c2s[i] = calloc(2 * state->nodes, sizeof(**state->nodes_c1c2s));
 	}
-	state->nodes_gatecount = zalloc(state->nodes * sizeof(*state->nodes_gatecount));
-	state->nodes_c1c2count = zalloc(state->nodes * sizeof(*state->nodes_c1c2count));
-	state->nodes_dependants = zalloc(state->nodes * sizeof(*state->nodes_dependants));
-	state->nodes_left_dependants = zalloc(state->nodes * sizeof(*state->nodes_left_dependants));
-	state->nodes_dependant = zalloc(state->nodes * sizeof(*state->nodes_dependant));
+	state->nodes_gatecount = calloc(state->nodes, sizeof(*state->nodes_gatecount));
+	state->nodes_c1c2count = calloc(state->nodes, sizeof(*state->nodes_c1c2count));
+	state->nodes_dependants = calloc(state->nodes, sizeof(*state->nodes_dependants));
+	state->nodes_left_dependants = calloc(state->nodes, sizeof(*state->nodes_left_dependants));
+	state->nodes_dependant = malloc(state->nodes * sizeof(*state->nodes_dependant));
 	for (count_t i = 0; i < state->nodes; i++) {
-		state->nodes_dependant[i] = zalloc(state->nodes * sizeof(**state->nodes_dependant));
+		state->nodes_dependant[i] = calloc(state->nodes, sizeof(**state->nodes_dependant));
 	}
-	state->nodes_left_dependant = zalloc(state->nodes * sizeof(*state->nodes_left_dependant));
+	state->nodes_left_dependant = malloc(state->nodes * sizeof(*state->nodes_left_dependant));
 	for (count_t i = 0; i < state->nodes; i++) {
-		state->nodes_left_dependant[i] = zalloc(state->nodes * sizeof(**state->nodes_left_dependant));
+		state->nodes_left_dependant[i] = calloc(state->nodes, sizeof(**state->nodes_left_dependant));
 	}
-	state->transistors_gate = zalloc(state->transistors * sizeof(*state->transistors_gate));
-	state->transistors_c1 = zalloc(state->transistors * sizeof(*state->transistors_c1));
-	state->transistors_c2 = zalloc(state->transistors * sizeof(*state->transistors_c2));
-	state->transistors_on = zalloc(WORDS_FOR_BITS(state->transistors) * sizeof(*state->transistors_on));
-	state->list1 = zalloc(state->nodes * sizeof(*state->list1));
-	state->list2 = zalloc(state->nodes * sizeof(*state->list2));
-	state->listout_bitmap = zalloc(WORDS_FOR_BITS(state->nodes) * sizeof(*state->listout_bitmap));
-	state->group = zalloc(state->nodes * sizeof(*state->group));
-	state->groupbitmap = zalloc(WORDS_FOR_BITS(state->nodes) * sizeof(*state->groupbitmap));
+	state->transistors_gate = calloc(state->transistors, sizeof(*state->transistors_gate));
+	state->transistors_c1 = calloc(state->transistors, sizeof(*state->transistors_c1));
+	state->transistors_c2 = calloc(state->transistors, sizeof(*state->transistors_c2));
+	state->transistors_on = calloc(WORDS_FOR_BITS(state->transistors), sizeof(*state->transistors_on));
+	state->list1 = calloc(state->nodes, sizeof(*state->list1));
+	state->list2 = calloc(state->nodes, sizeof(*state->list2));
+	state->listout_bitmap = calloc(WORDS_FOR_BITS(state->nodes), sizeof(*state->listout_bitmap));
+	state->group = malloc(state->nodes * sizeof(*state->group));
+	state->groupbitmap = calloc(WORDS_FOR_BITS(state->nodes), sizeof(*state->groupbitmap));
 	state->listin.list = state->list1;
+        state->listin.count = 0;
 	state->listout.list = state->list2;
+        state->listout.count = 0;
 
 	count_t i;
 	/* copy nodes into r/w data structure */
@@ -623,12 +617,11 @@ stabilizeChip(state_t *state)
 void
 setNode(state_t *state, nodenum_t nn, BOOL s)
 {
-	BOOL oldstate = get_nodes_pullup(state, nn);
-	if (s != oldstate) {
-		set_nodes_pullup(state, nn, s);
-		set_nodes_pulldown(state, nn, !s);
-		listout_add(state, nn);
-	}
+        set_nodes_pullup(state, nn, s);
+        set_nodes_pulldown(state, nn, !s);
+        listout_add(state, nn);
+
+        recalcNodeList(state);
 }
 
 BOOL
@@ -657,6 +650,6 @@ readNodes(state_t *state, int count, nodenum_t *nodelist)
 void
 writeNodes(state_t *state, int count, nodenum_t *nodelist, int v)
 {
-	for (int i = 0; i < count; i++, v >>= 1)
-		setNode(state, nodelist[i], v & 1);
+	for (int i = 0; i < 8; i++, v >>= 1)
+	setNode(state, nodelist[i], v & 1);
 }
