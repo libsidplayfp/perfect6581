@@ -2,7 +2,7 @@
 #  define state_t void
 #endif
 
-extern state_t *initAndResetChip();
+extern state_t *initAndResetChip(void);
 extern void destroyChip(state_t *state);
 extern void step(state_t *state);
 extern void chipStatus(state_t *state);
@@ -14,7 +14,7 @@ extern void writeAddress(state_t *state, unsigned char);
 extern void writeData(state_t *state, unsigned char);
 extern unsigned char readData(state_t *state);
 
-extern unsigned int cycle;
+extern unsigned long cycle;
 extern unsigned int transistors;
 
 //TODO remove
