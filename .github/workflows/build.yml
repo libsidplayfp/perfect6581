@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - test
+  pull_request:
+    branches:
+      - master
+      - test
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+#    - name: deps
+#      run: |
+#        sudo apt-get update
+#        sudo apt-get install
+    - name: build
+      run: |
+         make && make test
+    - name: test
+      run: |
+         ./test

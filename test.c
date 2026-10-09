@@ -124,5 +124,5 @@ main()
     if (noi != 0xFFFFF8)
         exit(EXIT_FAILURE);
 
-    exit(EXIT_SUCCESS);
+    exit(EXIT_FAILURE); //
 }
