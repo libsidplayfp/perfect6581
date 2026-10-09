@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - master
-      - test
+      - dev/**
   pull_request:
     branches:
       - master
-      - test
+      - dev/**
 
 permissions:
   contents: read
