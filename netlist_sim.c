@@ -43,16 +43,24 @@ typedef uint16_t count_t;
  *
  ************************************************************/
 
-#if 1 /* faster on 64 bit CPUs */
+#if 1       /* faster on 64 bit CPUs */
 typedef unsigned long long bitmap_t;
 #define BITMAP_SHIFT 6
 #define BITMAP_MASK 63
 #define ONE 1ULL
-#else
-typedef unsigned int bitmap_t;
+
+#elif 0       /* faster on most 32 bit CPUs */
+typedef uint32_t bitmap_t;
 #define BITMAP_SHIFT 5
 #define BITMAP_MASK 31
+#define ONE 1UL
+
+#else       /* faster in some cases (and compilers) that allow for vectorization */
+typedef uint8_t bitmap_t;
+#define BITMAP_SHIFT 3
+#define BITMAP_MASK 7
 #define ONE 1U
+
 #endif
 
 /* list of nodes that need to be recalculated */
@@ -85,6 +93,7 @@ typedef struct {
     bitmap_t *nodes_pulldown;
     bitmap_t *nodes_value;
     nodenum_t **nodes_gates;
+    nodenum_t *node_block;
     c1c2_t *nodes_c1c2s;
     count_t *nodes_gatecount;
     count_t *nodes_c1c2offset;
@@ -92,6 +101,7 @@ typedef struct {
     nodenum_t *nodes_left_dependants;
     nodenum_t **nodes_dependant;
     nodenum_t **nodes_left_dependant;
+    nodenum_t *dependent_block;
 
     /* everything that describes a transistor */
     nodenum_t *transistors_gate;
@@ -112,16 +122,16 @@ typedef struct {
     nodenum_t *group;
     count_t groupcount;
     bitmap_t *groupbitmap;
-
-    enum {
-        contains_nothing,
-        contains_hi,
-        contains_pullup,
-        contains_pulldown,
-        contains_vcc,
-        contains_vss
-    } group_contains_value;
 } state_t;
+
+typedef enum {
+        contains_nothing = 0,
+        contains_hi = 1,
+        contains_pullup = 2,
+        contains_pulldown = 3,
+        contains_vcc = 4,
+        contains_vss = 5
+} group_value;
 
 /************************************************************
  *
@@ -263,7 +273,7 @@ listout_clear(state_t *state)
 static inline void
 listout_add(state_t *state, nodenum_t i)
 {
-    if (!get_bitmap(state->listout_bitmap, i)) {
+    if (get_bitmap(state->listout_bitmap, i) == 0) {
         state->listout.list[state->listout.count++] = i;
         set_bitmap(state->listout_bitmap, i, 1);
     }
@@ -325,8 +335,8 @@ group_count(state_t *state)
  *
  ************************************************************/
 
-static inline void
-addNodeToGroup(state_t *state, nodenum_t n)
+static inline group_value
+addNodeToGroup(state_t *state, nodenum_t n, group_value val)
 {
     /*
      * We need to stop at vss and vcc, otherwise we'll revisit other groups
@@ -334,55 +344,54 @@ addNodeToGroup(state_t *state, nodenum_t n)
      * the fact that they are connected to vcc or vss.
      */
     if (n == state->vss) {
-        state->group_contains_value = contains_vss;
-        return;
+        return contains_vss;
     }
     if (n == state->vcc) {
-        if (state->group_contains_value != contains_vss)
-            state->group_contains_value = contains_vcc;
-        return;
+        if (val != contains_vss)
+            val = contains_vcc;
+        return val;
     }
 
+    /* check and see if we already have this node, and if so return */
     if (group_contains(state, n))
-        return;
+        return val;
 
     group_add(state, n);
 
-    if (state->group_contains_value < contains_pulldown && get_nodes_pulldown(state, n)) {
-        state->group_contains_value = contains_pulldown;
-    }
-    if (state->group_contains_value < contains_pullup && get_nodes_pullup(state, n)) {
-        state->group_contains_value = contains_pullup;
-    }
-    if (state->group_contains_value < contains_hi && get_nodes_value(state, n)) {
-        state->group_contains_value = contains_hi;
-    }
+    if (val < contains_pulldown && get_nodes_pulldown(state, n))
+        val = contains_pulldown;
+    if (val < contains_pullup && get_nodes_pullup(state, n))
+        val = contains_pullup;
+    if (val < contains_hi && get_nodes_value(state, n))
+        val = contains_hi;
+    /* state can remain at contains_nothing if the node value is low */
 
     /* revisit all transistors that control this node */
-    count_t end = state->nodes_c1c2offset[n+1];
-    for (count_t t = state->nodes_c1c2offset[n]; t < end; t++) {
-        c1c2_t c = state->nodes_c1c2s[t];
+    const count_t start = state->nodes_c1c2offset[n];
+    const count_t end = state->nodes_c1c2offset[n+1];
+    const c1c2_t *node_c1c2s = state->nodes_c1c2s;
+    for (count_t t = start; t < end; t++) {
+        const c1c2_t c = node_c1c2s[t];
         /* if the transistor connects c1 and c2... */
         if (get_transistors_on(state, c.transistor)) {
-            addNodeToGroup(state, c.other_node);
+            val = addNodeToGroup(state, c.other_node, val);
         }
     }
+
+    return val;
 }
 
-static inline void
+static inline group_value
 addAllNodesToGroup(state_t *state, nodenum_t node)
 {
     group_clear(state);
-
-    state->group_contains_value = contains_nothing;
-
-    addNodeToGroup(state, node);
+    return addNodeToGroup(state, node, contains_nothing);
 }
 
 static inline BOOL
-getGroupValue(state_t *state)
+getGroupValue(group_value node_value)
 {
-    switch (state->group_contains_value) {
+    switch (node_value) {
         case contains_vcc:
         case contains_pullup:
         case contains_hi:
@@ -403,10 +412,10 @@ recalcNode(state_t *state, nodenum_t node)
      * get all nodes that are connected through
      * transistors, starting with this one
      */
-    addAllNodesToGroup(state, node);
+    group_value node_value = addAllNodesToGroup(state, node);
 
     /* get the state of the group */
-    BOOL newv = getGroupValue(state);
+    BOOL newv = getGroupValue(node_value);
 
     /*
      * - set all nodes to the group state
@@ -415,21 +424,27 @@ recalcNode(state_t *state, nodenum_t node)
      *   for the next run
      */
     for (count_t i = 0; i < group_count(state); i++) {
-        nodenum_t nn = group_get(state, i);
+        const nodenum_t nn = group_get(state, i);
         if (get_nodes_value(state, nn) != newv) {
             set_nodes_value(state, nn, newv);
-            for (count_t t = 0; t < state->nodes_gatecount[nn]; t++) {
-                transnum_t tn = state->nodes_gates[nn][t];
+            const count_t gate_count = state->nodes_gatecount[nn];
+            const nodenum_t *gates = state->nodes_gates[nn];
+            for (count_t t = 0; t < gate_count; t++) {
+                transnum_t tn = gates[t];
                 set_transistors_on(state, tn, newv);
             }
 
             if (newv) {
-                for (count_t g = 0; g < state->nodes_left_dependants[nn]; g++) {
-                    listout_add(state, state->nodes_left_dependant[nn][g]);
+                const nodenum_t dep_left_count = state->nodes_left_dependants[nn];
+                const nodenum_t *deps_left = state->nodes_left_dependant[nn];
+                for (count_t g = 0; g < dep_left_count; g++) {
+                    listout_add(state, deps_left[g]);
                 }
             } else {
-                for (count_t g = 0; g < state->nodes_dependants[nn]; g++) {
-                    listout_add(state, state->nodes_dependant[nn][g]);
+                const nodenum_t dep_count = state->nodes_dependants[nn];
+                const nodenum_t *deps = state->nodes_dependant[nn];
+                for (count_t g = 0; g < dep_count; g++) {
+                    listout_add(state, deps[g]);
                 }
             }
         }
@@ -439,7 +454,10 @@ recalcNode(state_t *state, nodenum_t node)
 void
 recalcNodeList(state_t *state)
 {
-    for (int j = 0; j < 100; j++) { /* loop limiter */
+    const int max_iterations = 50;
+    int j = 0;
+
+    for (j = 0; j < max_iterations; j++) {  /* loop limiter */
         /*
          * make the secondary list our primary list, use
          * the data storage of the primary list as the
@@ -459,11 +477,18 @@ recalcNodeList(state_t *state)
          * all transistors controlled by this path, collecting
          * all nodes that changed because of it for the next run
          */
-        for (count_t i = 0; i < listin_count(state); i++) {
+        const count_t list_count = listin_count(state);
+        for (count_t i = 0; i < list_count; i++) {
             nodenum_t n = listin_get(state, i);
             recalcNode(state, n);
         }
     }
+
+    if (j == max_iterations) {
+        fprintf(stderr,"### recalcNodeList max iterations hit, listin.count = %d\n", listin_count(state));
+    }
+
+    /* without this, we'll have a bogus listin on the next step */
     listout_clear(state);
 }
 
@@ -476,9 +501,10 @@ recalcNodeList(state_t *state)
 static inline void
 add_nodes_dependant(state_t *state, nodenum_t a, nodenum_t b)
 {
+    /* O(N^2) behavior, but only run once at initialization */
     for (count_t g = 0; g < state->nodes_dependants[a]; g++)
-    if (state->nodes_dependant[a][g] == b)
-    return;
+        if (state->nodes_dependant[a][g] == b)
+            return;
 
     state->nodes_dependant[a][state->nodes_dependants[a]++] = b;
 }
@@ -486,13 +512,25 @@ add_nodes_dependant(state_t *state, nodenum_t a, nodenum_t b)
 static inline void
 add_nodes_left_dependant(state_t *state, nodenum_t a, nodenum_t b)
 {
+    /* O(N^2) behavior, but only run once at initialization */
     for (count_t g = 0; g < state->nodes_left_dependants[a]; g++)
-    if (state->nodes_left_dependant[a][g] == b)
-    return;
+        if (state->nodes_left_dependant[a][g] == b)
+            return;
 
     state->nodes_left_dependant[a][state->nodes_left_dependants[a]++] = b;
 }
 
+
+/*  6502:
+        3288 transistors, 3239 used in simulation after duplicate removal
+        1725 entries in node list and used in simulation
+        c1c2total = 6478
+        block_gate_size = 3239
+        block_dep_size = 7260
+
+    Working set = 207 KB allocations, 220 KB binary, plus system libs
+                = 1.1 MB in release build
+*/
 state_t *
 setupNodesAndTransistors(netlist_transdefs *transdefs, BOOL *node_is_pullup, nodenum_t nodes, nodenum_t transistors, nodenum_t vss, nodenum_t vcc)
 {
@@ -502,34 +540,32 @@ setupNodesAndTransistors(netlist_transdefs *transdefs, BOOL *node_is_pullup, nod
     state->transistors = transistors;
     state->vss = vss;
     state->vcc = vcc;
-    state->nodes_pullup = calloc(WORDS_FOR_BITS(state->nodes), sizeof(*state->nodes_pullup));
-    state->nodes_pulldown = calloc(WORDS_FOR_BITS(state->nodes), sizeof(*state->nodes_pulldown));
-    state->nodes_value = calloc(WORDS_FOR_BITS(state->nodes), sizeof(*state->nodes_value));
-    state->nodes_gates = malloc(state->nodes * sizeof(*state->nodes_gates));
-    for (count_t i = 0; i < state->nodes; i++) {
-        state->nodes_gates[i] = calloc(state->nodes, sizeof(**state->nodes_gates));
-    }
+
+    /* chip state - remains static during simulation */
     state->nodes_gatecount = calloc(state->nodes, sizeof(*state->nodes_gatecount));
     state->nodes_c1c2offset = calloc(state->nodes + 1, sizeof(*state->nodes_c1c2offset));
     state->nodes_dependants = calloc(state->nodes, sizeof(*state->nodes_dependants));
     state->nodes_left_dependants = calloc(state->nodes, sizeof(*state->nodes_left_dependants));
-    state->nodes_dependant = malloc(state->nodes * sizeof(*state->nodes_dependant));
-    for (count_t i = 0; i < state->nodes; i++) {
-        state->nodes_dependant[i] = calloc(state->nodes, sizeof(**state->nodes_dependant));
-    }
-    state->nodes_left_dependant = malloc(state->nodes * sizeof(*state->nodes_left_dependant));
-    for (count_t i = 0; i < state->nodes; i++) {
-        state->nodes_left_dependant[i] = calloc(state->nodes, sizeof(**state->nodes_left_dependant));
-    }
+
     state->transistors_gate = calloc(state->transistors, sizeof(*state->transistors_gate));
     state->transistors_c1 = calloc(state->transistors, sizeof(*state->transistors_c1));
     state->transistors_c2 = calloc(state->transistors, sizeof(*state->transistors_c2));
+
+    /* simulation state - changes during simulation */
+    state->nodes_pullup = calloc(WORDS_FOR_BITS(state->nodes), sizeof(*state->nodes_pullup));
+    state->nodes_pulldown = calloc(WORDS_FOR_BITS(state->nodes), sizeof(*state->nodes_pulldown));
+    state->nodes_value = calloc(WORDS_FOR_BITS(state->nodes), sizeof(*state->nodes_value));
+
     state->transistors_on = calloc(WORDS_FOR_BITS(state->transistors), sizeof(*state->transistors_on));
+    state->listout_bitmap = calloc(WORDS_FOR_BITS(state->nodes), sizeof(*state->listout_bitmap));
+    state->groupbitmap = calloc(WORDS_FOR_BITS(state->nodes), sizeof(*state->groupbitmap));
+
+    /* group content depends on active state, not easy to predict actual size needed */
+    state->group = calloc(state->nodes, sizeof(*state->group));
+
+    /* ping pong state buffers */
     state->list1 = calloc(state->nodes, sizeof(*state->list1));
     state->list2 = calloc(state->nodes, sizeof(*state->list2));
-    state->listout_bitmap = calloc(WORDS_FOR_BITS(state->nodes), sizeof(*state->listout_bitmap));
-    state->group = malloc(state->nodes * sizeof(*state->group));
-    state->groupbitmap = calloc(WORDS_FOR_BITS(state->nodes), sizeof(*state->groupbitmap));
     state->groupcount = 0;
     state->listin.list = state->list1;
         state->listin.count = 0;
@@ -537,36 +573,40 @@ setupNodesAndTransistors(netlist_transdefs *transdefs, BOOL *node_is_pullup, nod
         state->listout.count = 0;
 
     count_t i;
+
     /* copy nodes into r/w data structure */
     for (i = 0; i < state->nodes; i++) {
         set_nodes_pullup(state, i, node_is_pullup[i]);
         state->nodes_gatecount[i] = 0;
     }
-    /* copy transistors into r/w data structure */
-    count_t j = 0;
+
+    /* Copy transistors into r/w data structure and remove duplicates */
+    count_t transistors_used = 0;
     for (i = 0; i < state->transistors; i++) {
         nodenum_t gate = transdefs[i].gate;
         nodenum_t c1 = transdefs[i].c1;
         nodenum_t c2 = transdefs[i].c2;
-        /* skip duplicate transistors */
+        /* skip duplicate transistors
+            O(N^2) operation, but only done once at initialization, not a significant time sink */
         BOOL found = NO;
-        for (count_t j2 = 0; j2 < j; j2++) {
+        for (count_t j2 = 0; j2 < transistors_used; j2++) {
             if (state->transistors_gate[j2] == gate &&
                 ((state->transistors_c1[j2] == c1 &&
                   state->transistors_c2[j2] == c2) ||
                  (state->transistors_c1[j2] == c2 &&
                   state->transistors_c2[j2] == c1))) {
                      found = YES;
+                     break;
                  }
         }
         if (!found) {
-            state->transistors_gate[j] = gate;
-            state->transistors_c1[j] = c1;
-            state->transistors_c2[j] = c2;
-            j++;
+            state->transistors_gate[transistors_used] = gate;
+            state->transistors_c1[transistors_used] = c1;
+            state->transistors_c2[transistors_used] = c2;
+            transistors_used++;
         }
     }
-    state->transistors = j;
+    state->transistors = transistors_used;
 
     /* cross reference transistors in nodes data structures */
     /* start by computing how many c1c2 entries should be created for each node */
@@ -574,21 +614,29 @@ setupNodesAndTransistors(netlist_transdefs *transdefs, BOOL *node_is_pullup, nod
     count_t c1c2total = 0;
     for (i = 0; i < state->transistors; i++) {
         nodenum_t gate = state->transistors_gate[i];
-        state->nodes_gates[gate][state->nodes_gatecount[gate]++] = i;
-        c1c2count[state->transistors_c1[i]]++;
-        c1c2count[state->transistors_c2[i]]++;
+        nodenum_t c1 = state->transistors_c1[i];
+        nodenum_t c2 = state->transistors_c2[i];
+
+        if (gate >= nodes || c1 >= nodes || c2 >= nodes)
+            fprintf(stderr,"FATAL - bad transistor definition %d\n", i);
+
+        state->nodes_gatecount[gate]++;
+        c1c2count[c1]++;
+        c1c2count[c2]++;
         c1c2total += 2;
     }
+
     /* then sum the counts to find each node's offset into the c1c2 array */
     count_t c1c2offset = 0;
     for (i = 0; i < state->nodes; i++) {
         state->nodes_c1c2offset[i] = c1c2offset;
         c1c2offset += c1c2count[i];
     }
-    state->nodes_c1c2offset[i] = c1c2offset;
+    state->nodes_c1c2offset[i] = c1c2offset;    /* fill the end entry, so we can calculate distances/counts */
+
     /* create and fill the nodes_c1c2s array according to these offsets */
     state->nodes_c1c2s = calloc(c1c2total, sizeof(*state->nodes_c1c2s));
-    memset(c1c2count, 0, state->nodes * sizeof(*c1c2count));
+    memset(c1c2count, 0, state->nodes * sizeof(*c1c2count));    /* zero counts so we can reuse them */
     for (i = 0; i < state->transistors; i++) {
         nodenum_t c1 = state->transistors_c1[i];
         nodenum_t c2 = state->transistors_c2[i];
@@ -597,11 +645,101 @@ setupNodesAndTransistors(netlist_transdefs *transdefs, BOOL *node_is_pullup, nod
     }
     free(c1c2count);
 
+    c1c2count = NULL;
+
+
+    /* Sum the counts for total allocation of gates */
+    size_t block_gate_size = 0;
+    for (i = 0; i < state->nodes; i++) {
+        block_gate_size += (size_t) state->nodes_gatecount[i];
+    }
+
+    /* Allocate the block of gate data all at once */
+    nodenum_t *block_gate = calloc( block_gate_size, sizeof(**state->nodes_gates) );
+    state->node_block = block_gate;
+
+    /* Assign pointer from our larger block, using only counts needed
+TODO: ccox - should this use offsets like the c1c2 list?????
+    */
+    state->nodes_gates = malloc(nodes * sizeof(*state->nodes_gates));
+    for (i = 0; i < state->nodes; i++) {
+        count_t count = state->nodes_gatecount[i];
+        if (count == 0)
+            state->nodes_gates[i] = NULL;
+        else
+            state->nodes_gates[i] = block_gate;
+        block_gate += count;
+    }
+
+    /* Cross reference transistors in nodes with smaller data structures */
+    memset(state->nodes_gatecount, 0, state->nodes * sizeof(*state->nodes_gatecount));
+    for (i = 0; i < state->transistors; i++) {
+        nodenum_t gate = state->transistors_gate[i];
+        state->nodes_gates[gate][state->nodes_gatecount[gate]++] = i;
+    }
+
+
+
+    /* See how many dependent node entries we really need.
+        Must happen after gatecount and nodes_gates assignments!
+    */
     for (i = 0; i < state->nodes; i++) {
         state->nodes_dependants[i] = 0;
         state->nodes_left_dependants[i] = 0;
         for (count_t g = 0; g < state->nodes_gatecount[i]; g++) {
-            transnum_t t = state->nodes_gates[i][g];
+            nodenum_t t = state->nodes_gates[i][g];
+            nodenum_t c1 = state->transistors_c1[t];
+            if (c1 != vss && c1 != vcc) {
+                state->nodes_dependants[i]++;
+            }
+            nodenum_t c2 = state->transistors_c2[t];
+            if (c2 != vss && c2 != vcc) {
+                state->nodes_dependants[i]++;
+            }
+            state->nodes_left_dependants[i]++;
+        }
+    }
+
+    /* Sum the counts to find total size of the dependents array */
+    size_t block_dep_size = 0;
+    for (i = 0; i < state->nodes; i++) {
+        block_dep_size += state->nodes_dependants[i];
+        block_dep_size += state->nodes_left_dependants[i];
+    }
+
+    /* Allocate the dependents block all at once */
+    nodenum_t *block_dep = calloc( block_dep_size, sizeof(**state->nodes_dependant) );
+    state->dependent_block = block_dep;
+
+    /* Assign pointers from our larger block, using only counts needed
+TODO: ccox - should this use offsets like the c1c2 list?????
+    */
+    state->nodes_dependant = malloc(nodes * sizeof(*state->nodes_dependant));
+    for (i = 0; i < state->nodes; i++) {
+        nodenum_t count = state->nodes_dependants[i];
+        if (count == 0)
+            state->nodes_dependant[i] = NULL;
+        else
+            state->nodes_dependant[i] = block_dep;
+        block_dep += count;
+    }
+
+    state->nodes_left_dependant = malloc(nodes * sizeof(*state->nodes_left_dependant));
+    for (i = 0; i < state->nodes; i++) {
+        nodenum_t count = state->nodes_left_dependants[i];
+        if (count == 0)
+            state->nodes_left_dependant[i] = NULL;
+        else
+            state->nodes_left_dependant[i] = block_dep;
+        block_dep += count;
+    }
+
+    /* Copy dependencies into smaller data structures */
+    for (i = 0; i < state->nodes; i++) {
+        state->nodes_dependants[i] = 0;
+        state->nodes_left_dependants[i] = 0;
+        for (count_t g = 0; g < state->nodes_gatecount[i]; g++) {
+            nodenum_t t = state->nodes_gates[i][g];
             nodenum_t c1 = state->transistors_c1[t];
             if (c1 != vss && c1 != vcc) {
                 add_nodes_dependant(state, i, c1);
@@ -637,23 +775,14 @@ destroyNodesAndTransistors(state_t *state)
     free(state->nodes_pullup);
     free(state->nodes_pulldown);
     free(state->nodes_value);
-    for (count_t i = 0; i < state->nodes; i++) {
-        free(state->nodes_gates[i]);
-    }
     free(state->nodes_gates);
+    free(state->node_block);
     free(state->nodes_c1c2s);
     free(state->nodes_gatecount);
     free(state->nodes_c1c2offset);
     free(state->nodes_dependants);
     free(state->nodes_left_dependants);
-    for (count_t i = 0; i < state->nodes; i++) {
-        free(state->nodes_dependant[i]);
-    }
-    free(state->nodes_dependant);
-    for (count_t i = 0; i < state->nodes; i++) {
-        free(state->nodes_left_dependant[i]);
-    }
-    free(state->nodes_left_dependant);
+    free(state->dependent_block);
     free(state->transistors_gate);
     free(state->transistors_c1);
     free(state->transistors_c2);
@@ -670,7 +799,7 @@ void
 stabilizeChip(state_t *state)
 {
     for (count_t i = 0; i < state->nodes; i++)
-    listout_add(state, i);
+        listout_add(state, i);
 
     recalcNodeList(state);
 }
@@ -684,11 +813,11 @@ stabilizeChip(state_t *state)
 void
 setNode(state_t *state, nodenum_t nn, BOOL s)
 {
-        set_nodes_pullup(state, nn, s);
-        set_nodes_pulldown(state, nn, !s);
-        listout_add(state, nn);
+    set_nodes_pullup(state, nn, s);
+    set_nodes_pulldown(state, nn, !s);
+    listout_add(state, nn);
 
-        recalcNodeList(state);
+    recalcNodeList(state);
 }
 
 BOOL
@@ -706,7 +835,7 @@ isNodeHigh(state_t *state, nodenum_t nn)
 unsigned int
 readNodes(state_t *state, int count, nodenum_t *nodelist)
 {
-    int result = 0;
+    unsigned int result = 0;
     for (int i = count - 1; i >= 0; i--) {
         result <<=  1;
         result |= isNodeHigh(state, nodelist[i]);
