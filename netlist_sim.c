@@ -543,11 +543,11 @@ setupNodesAndTransistors(netlist_transdefs *transdefs, BOOL *node_is_pullup, nod
 
     /* group content depends on active state, not easy to predict actual size needed */
     state->group = calloc(state->nodes, sizeof(*state->group));
+    state->groupcount = 0;
 
     /* ping pong state buffers */
     state->list1 = calloc(state->nodes, sizeof(*state->list1));
     state->list2 = calloc(state->nodes, sizeof(*state->list2));
-    state->groupcount = 0;
     state->listin.list = state->list1;
         state->listin.count = 0;
     state->listout.list = state->list2;
