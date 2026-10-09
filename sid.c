@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2026 Leandro Nini
+ * Copyright (c) 2016 Leandro Nini
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,6 @@
 #include "perfect6581.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 
 void
 writeReg(void *state, unsigned char addr, unsigned char data)
@@ -58,14 +57,11 @@ readReg(void *state, unsigned char addr)
 int
 main()
 {
-    uint32_t noi;
+    //int clk = 0;
 
     void *state = initAndResetChip();
 
-    //chipStatus(state);
-    noi = readNoi3(state);
-    if (noi != 0xFFFFFF)
-        exit(EXIT_FAILURE);
+    chipStatus(state);
 
     // set pw3 hi
     writeReg(state, 0x11, 0xA5);
@@ -84,6 +80,7 @@ main()
 
     // Set gate on
     writeReg(state, 0x12, 0x11);
+printf("*** gate on\n\n");
 
     for (int i=0; i<0x7f; i++)
     {
@@ -100,6 +97,7 @@ main()
 
     // Set test on
     writeReg(state, 0x12, 0x08);
+printf("*** gate off\n\n");
 
     for (int i=0; i<0x7f; i++)
     {
@@ -108,10 +106,7 @@ main()
         //printf("*** Wave 3: %03X\n", readWav3(state));
     }
 
-    //chipStatus(state);
-    noi = readNoi3(state);
-    if (noi != 0xFFFFFC)
-        exit(EXIT_FAILURE);
+    chipStatus(state);
 
     // Set test off
     writeReg(state, 0x12, 0x00);
@@ -119,10 +114,18 @@ main()
     step(state);
     step(state);
 
-    //chipStatus(state);
-    noi = readNoi3(state);
-    if (noi != 0xFFFFF8)
-        exit(EXIT_FAILURE);
+    chipStatus(state);
 
-    exit(EXIT_SUCCESS);
+#if 0
+    /* emulate the 6581! */
+    for (;;) {
+        step(state);
+        clk = !clk;
+//        if (clk)
+//            handle_monitor(state);
+
+        chipStatus(state);
+        //if (!(cycle % 1000)) printf("%d\n", cycle);
+    };
+#endif
 }

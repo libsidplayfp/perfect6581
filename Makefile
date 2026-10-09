@@ -1,14 +1,17 @@
 OBJS=perfect6581.o netlist_sim.o
-OBJS+=test.o
 #CFLAGS=-Werror -Wall -Wextra -pedantic -O3
 #CC=clang
 CFLAGS+=-std=c99
+CPPFLAGS=-DNDEBUG
 
-all: clean test
+all: clean sid
 
-test: $(OBJS)
-	$(CC) -o test $(OBJS)
+sid: $(OBJS) sid.o
+	$(CC) -o sid $(OBJS) sid.o
+
+test: $(OBJS) test.o
+	$(CC) -o test $(OBJS) test.o
 
 clean:
-	rm -f $(OBJS) test
+	rm -f $(OBJS) sid test
 

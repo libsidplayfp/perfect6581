@@ -28,9 +28,7 @@
 /* nodes & transistors */
 #include "netlist_6581.h"
 
-#define DEBUG
-
-#ifdef DEBUG
+#ifndef NDEBUG
 #  define debug(format, ...)       printf(format, ## __VA_ARGS__)
 #else
 #  define debug(format, ...)       // do nothing
@@ -241,7 +239,7 @@ readLfsr15Low(void *state)
 uint8_t
 readLfsr15High(void *state)
 {
-	return (uint8_t)readNodes(state, 7, (nodenum_t[]){ env3_lfsrA_bit08_out, env3_lfsrA_bit09_out, env3_lfsrA_bit10_out, env3_lfsrA_bit11_out, env3_lfsrA_bit12_out, env3_lfsrA_bit13_out, env3_lfsrA_bit14_out });
+    return (uint8_t)readNodes(state, 7, (nodenum_t[]){ env3_lfsrA_bit08_out, env3_lfsrA_bit09_out, env3_lfsrA_bit10_out, env3_lfsrA_bit11_out, env3_lfsrA_bit12_out, env3_lfsrA_bit13_out, env3_lfsrA_bit14_out });
 }
 
 uint16_t
@@ -292,12 +290,12 @@ step(void *state)
     recalcNodeList(state);
 
     //debug("Phi2: %s\n", isNodeHigh(state, Phi2) ? "high" : "low");
-	//debug("cl_a: %s\n", isNodeHigh(state, cl_a) ? "high" : "low");
+    //debug("cl_a: %s\n", isNodeHigh(state, cl_a) ? "high" : "low");
 
-	//debug("clk1: %s\n", isNodeHigh(state, sid_clk1) ? "high" : "low");
-	//debug("clk2: %s\n\n", isNodeHigh(state, sid_clk2) ? "high" : "low");
+    //debug("clk1: %s\n", isNodeHigh(state, sid_clk1) ? "high" : "low");
+    //debug("clk2: %s\n\n", isNodeHigh(state, sid_clk2) ? "high" : "low");
 
-#ifdef DEBUG
+#ifndef NDEBUG
     if (clk)
     {
         //debug("/res: %s\n", isNodeHigh(state, res) ? "high" : "low");
@@ -324,20 +322,20 @@ step(void *state)
         //debug("env3_cnt_up: %s\n", isNodeHigh(state, env3_cnt_up) ? "high" : "low");
         //debug("env3_cnt_down: %s\n", isNodeHigh(state, env3_cnt_down) ? "high" : "low");
         //debug("env3_cnt_cry0: %s\n", isNodeHigh(state, env3_cnt_cry0) ? "high" : "low");
-		//debug("lfsr15: %04X\n", readLfsr15(state));
+        //debug("lfsr15: %04X\n", readLfsr15(state));
         //debug("env3_lfsrA_rst_B: %s\n", isNodeHigh(state, env3_lfsrA_rst_B) ? "high" : "low");
-		//debug("lfsr5: %02X\n", readLfsr5(state));
+        //debug("lfsr5: %02X\n", readLfsr5(state));
         //debug("env3_lfsrB_rst: %s\n", isNodeHigh(state, env3_lfsrB_rst) ? "high" : "low");
         //debug("env3_lfsrB_clk_hold: %s\n", isNodeHigh(state, env3_lfsrB_clk_hold) ? "high" : "low");
         //debug("env3_lfsrB_clk_shift: %s\n", isNodeHigh(state, env3_lfsrB_clk_shift) ? "high" : "low");
         //debug("env3_r0: %s\n", isNodeHigh(state, env3_r0) ? "high" : "low");
         //debug("env3_cnt_sus: %s\n", isNodeHigh(state, env3_cnt_sus) ? "high" : "low");
-		//debug("ADRtoLUT: %02X\n", readADRtoLUT(state));
-		//debug("SUS: %02X\n", readSus(state));
+        //debug("ADRtoLUT: %02X\n", readADRtoLUT(state));
+        //debug("SUS: %02X\n", readSus(state));
         //debug("sel: %02X\n", readSel(state));
         debug("cnt: %02X\n", readEnvCnt(state));
         debug("\n");
-		//debug("%0d\n", readEnvCnt(state));
+        //debug("%0d\n", readEnvCnt(state));
     }
 #endif
     cycle++;
@@ -395,15 +393,15 @@ void
 chipStatus(void *state)
 {
     BOOL clk = isNodeHigh(state, sid_clk1);
-    uint16_t a = readAddressBus(state);
-    uint8_t d = readDataBus(state);
+    uint16_t addr = readAddressBus(state);
+    uint8_t data = readDataBus(state);
     BOOL r_w = isNodeHigh(state, rw);
 
-    printf("halfcyc:%ld phi0:%d AB:%02X D:%02X RnW:%d CTL3:%02X FREQ3:%04X PW3:%04X Acc3:%06X Noi3:%06X ENV3:%02X",
+    printf("halfcyc:%ld phi0:%d AB:%04X DB:%02X R/W:%d CTL3:%02X FREQ3:%04X PW3:%04X Acc3:%06X Noi3:%06X ENV3:%02X",
                 cycle,
                 clk,
-                a,
-                d,
+                addr,
+                data,
                 r_w,
                 readCtl3(state),
                 readFreq3(state),
