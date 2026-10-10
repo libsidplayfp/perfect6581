@@ -1210,7 +1210,7 @@ enum {
     env3_gate_cur,
     env3_gate_prev_inv,
     env3_cnt_dir,
-    
+
     env3_cd20,
     env3_cd21,
     env3_cd22,
@@ -1773,7 +1773,7 @@ netlist_6581_node_is_pullup[] = {
     1, 1, 1, 0,
     1, 0, 1, 0, 1, 0, 0,
     1, 0, 1, 0, 1, 0, 0,
-#endif    
+#endif
     0, 0,
 #ifndef MOS8580
     0, 0,
