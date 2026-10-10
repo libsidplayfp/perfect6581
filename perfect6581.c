@@ -22,6 +22,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "types.h"
 #include "netlist_sim.h"
@@ -33,6 +34,14 @@
 #else
 #  define debug(format, ...)       // do nothing
 #endif
+
+
+// Comparison function for sorting based on gate
+int compareByGate(const void* a, const void* b)
+{
+    return ((netlist_transdefs*)a)->gate
+           - ((netlist_transdefs*)b)->gate;
+}
 
 /************************************************************
  *
@@ -349,6 +358,9 @@ initAndResetChip()
     nodenum_t transistors = sizeof(netlist_6581_transdefs)/sizeof(*netlist_6581_transdefs);
 
     debug("nodes: %d\ntransistors: %d\n\n", nodes, transistors);
+
+    /* transistor netlist must be ordered by gate node_block */
+    qsort(netlist_6581_transdefs, transistors, sizeof(netlist_6581_transdefs[0]), compareByGate);
 
     void *state = setupNodesAndTransistors(netlist_6581_transdefs,
                                                 netlist_6581_node_is_pullup,
